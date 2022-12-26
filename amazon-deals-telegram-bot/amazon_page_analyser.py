@@ -7,14 +7,10 @@ from webdriver_manager.chrome import \
     ChromeDriverManager  # automatically download the correct version of the chrome driver
 from subprocess import CREATE_NO_WINDOW  # do not open terminal when creating selenium instance
 
-import re  # use regex for selecting product id in link
-import time  # wait until new page loaded
-
-
 import re  #use regex for selecting product id in link
 import time  #wait until new page loaded
 
-import requests  # lighter way to retrieve informations from html only (no js and css loaded)
+import requests  # lighter way to retrieve information from html only (no js and css loaded)
 from lxml import html
 
 
@@ -33,7 +29,7 @@ def start_selenium():
     return chrome_driver
 
 
-def get_deals_urls(selenium_driver):
+def get_deals(selenium_driver):
     deals_page = "https://www.amazon.it/deals/"
 
     print("Starting taking all urls")
@@ -49,13 +45,14 @@ def get_deals_urls(selenium_driver):
         elements_urls = []
         emergency_counter = 0
 
-        while(len(elements_urls) == 0):  #wait until pages loads the products with the wanted discount
-            #get all urls with <a> tag with a css class that contains 'DealCard'. There are both immediate deals and submenus with deals
-            elements_urls = [e.get_attribute("href") for e in seleniumDriver.find_elements(By.CSS_SELECTOR, "a[class*='DealCard']")]
+        while len(elements_urls) == 0:  # wait until pages loads the products with the wanted discount
+            # get all urls with <a> tag with a css class that contains 'DealCard'. There are both immediate deals and submenus with deals
+            elements_urls = [e.get_attribute("href") for e in
+                             selenium_driver.find_elements(By.CSS_SELECTOR, "a[class*='DealCard']")]
             time.sleep(0.5)
 
-            emergency_counter += 1  #avoid infinte loop if page does not load
-            if(emergency_counter > 120):
+            emergency_counter += 1  # avoid infinite loop if page does not load
+            if emergency_counter > 120:
                 raise Exception("Error loading products in deals page")
 
         deals_urls = []  # store all deals from main page and deals submenus
@@ -67,58 +64,47 @@ def get_deals_urls(selenium_driver):
 
         print("All urls taken")
 
-        return remove_duplicate_by_id(deals_urls)
+        product_ids = [extract_product_id(url) for url in deals_urls if extract_product_id(url) is not None and extract_product_id(url) != '']
+        return [*set(product_ids)]  # remove duplicates
 
     except Exception as e:
         print(e)
 
 
 def get_submenus_deals_urls(submenu_url):
-    #headers needed to avoid scraping blocking
-    headers = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:12.0) Gecko/20100101 Firefox/12.0',}
+    # headers needed to avoid scraping blocking
+    headers = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:12.0) Gecko/20100101 Firefox/12.0', }
     submenu_page = requests.post(submenu_url, headers=headers)
     submenu_page.raise_for_status()
 
     submenu_page_content = html.fromstring(submenu_page.content)
 
     # only the deals are present if cookies are not accepted (no suggestions at the bottom of the page)
-    elements_urls = submenu_page_content.xpath('//a[contains(@class, "a-link-normal")]/@href')  # TODO: not all links may be taken
+    elements_urls = submenu_page_content.xpath(
+        '//a[contains(@class, "a-link-normal")]/@href')  # TODO: these should be inserted in if is_product or is submenu condition
 
-    for url in elements_urls.copy():  # remove all urls that are not deals (for example, share urls)
-        if not is_product(url):
-            elements_urls.remove(url)
-
-    return elements_urls
+    return [x for x in elements_urls if is_product(x)]  # remove all urls that are not deals (for example, share urls)
 
 
-def is_product(url):  # products on sale have /dp/ in their link
+def is_product(url):  # products have /dp/ in their url
     return "/dp/" in url
 
 
-def remove_duplicate_by_id(urls):
-    for url in urls.copy():
-        product_id = re.search('dp\/(.*?)(?=\/|\?)', url).group(1)  # id between 'dp\' and ('?' or '\')
-
-        count = 0  # remove url if same id present more than once
-        for url in urls:
-            if product_id in url:
-                if count == 0:
-                    count += 1
-                else:
-                    urls.remove(url)
-    return urls
+def extract_product_id(url):
+    return re.search('dp\/(.*?)(?=\/|\?)', url).group(1)
 
 
-def get_product_info(product_url):
+def url_from_id(product_id):
+    return "https://www.amazon.it/dp/" + product_id
 
-    #headers needed to avoid scraping blocking
-    headers = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:12.0) Gecko/20100101 Firefox/12.0',}
-    product_page = requests.post(product_url, headers=headers)
+
+def get_product_info(product_id):
+    # headers needed to avoid scraping blocking
+    headers = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:12.0) Gecko/20100101 Firefox/12.0', }
+    product_page = requests.post(url_from_id(product_id), headers=headers)
     product_page.raise_for_status()
 
     product_page_content = html.fromstring(product_page.content)
-
-    product_id = re.search('dp\/(.*?)(?=\/|\?)', product_url).group(1)
 
     try:
         # elements may not be found if the deal is only for a subscription, if the deal ended or if there are options
@@ -138,5 +124,5 @@ def get_product_info(product_url):
         }
 
     except Exception as e:
-        print("Error at link:\n\n" + product_url + "\n\nbecause:\n\n" + str(e))
+        print("Error for product id:\n\n" + product_id + "\n\nbecause:\n\n" + str(e))
         return None
