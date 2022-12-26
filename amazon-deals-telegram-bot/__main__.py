@@ -12,10 +12,9 @@ def get_deals_urls():
     selenium_driver.quit()  # close everything that was created. Better not to keep driver open for much time
     return deals_urls
 
-
-def get_random_product_info(selenium_driver, deals_urls, used_products_ids):
+def get_random_product_info(deals_urls, used_products_ids):
     selected_url = random.choice(deals_urls)  # select a random product to get the info
-    selected_product_info = apa.get_product_info(selenium_driver, selected_url)
+    selected_product_info = apa.get_product_info(selected_url)
 
     while True:  # get new product until is the selected one is valid
 
@@ -25,12 +24,12 @@ def get_random_product_info(selenium_driver, deals_urls, used_products_ids):
 
         deals_urls.remove(selected_url)  # remove url of invalid product
         selected_url = random.choice(deals_urls)
-        selected_product_info = apa.get_product_info(selenium_driver, random.choice(deals_urls))
+        selected_product_info = apa.get_product_info(random.choice(deals_urls))
 
     used_products_ids.append(selected_product_info["product_id"])
 
-    if len(used_products_ids) == 100:
-        used_products_ids.pop(0)  # remove the oldest product sent if enough time has passed
+    if(len(used_products_ids) == 100):
+        used_products_ids.pop(0)  #remove oldest product sent if enough time has passed
 
     return selected_product_info
 
@@ -70,11 +69,7 @@ if __name__ == '__main__':
             deals_urls = get_deals_urls()
             start = time.time()
 
-        selenium_driver = apa.start_selenium()
-
-        selected_product_info = get_random_product_info(selenium_driver, deals_urls, used_products_ids)
+        selected_product_info = get_random_product_info(deals_urls, used_products_ids)
         send_deal(bot, selected_product_info, channel_id)
-
-        selenium_driver.quit()  # close everything that was created. Better not to keep driver open for much time
 
         time.sleep(random.randrange(60 * 20, 60 * 30))  # send every 20 to 30 minutes
