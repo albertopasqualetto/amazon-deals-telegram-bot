@@ -1,10 +1,14 @@
 from selenium import webdriver
 
-from selenium.webdriver.chrome.service import Service  #handle chrome driver
-from selenium.webdriver.common.by import By #get element by
+from selenium.webdriver.chrome.service import Service  # handle chrome driver
+from selenium.webdriver.common.by import By  # get element by
 
-from webdriver_manager.chrome import ChromeDriverManager  #automatically download the correct version of the chrome driver
-from subprocess import CREATE_NO_WINDOW  #do not open terminal when creating selenium instance
+from webdriver_manager.chrome import \
+    ChromeDriverManager  # automatically download the correct version of the chrome driver
+from subprocess import CREATE_NO_WINDOW  # do not open terminal when creating selenium instance
+
+import re  # use regex for selecting product id in link
+import time  # wait until new page loaded
 
 
 import re  #use regex for selecting product id in link
@@ -15,32 +19,33 @@ from lxml import html
 
 
 def start_selenium():
-    chrome_options = webdriver.ChromeOptions()  #add the debug options you need
-    chrome_options.add_argument("--headless")  #do not open chrome gui
-    chrome_options.add_argument('--disable-gpu')  #disable hardware acceleration for compatibility reasons
+    chrome_options = webdriver.ChromeOptions()  # add the debug options you need
+    chrome_options.add_argument("--headless")  # do not open chrome gui
+    chrome_options.add_argument('--disable-gpu')  # disable hardware acceleration for compatibility reasons
 
-    #download the most up-to-date chrome driver
+    # download the most up-to-date chrome driver
     chrome_service = Service(ChromeDriverManager().install())
     chrome_service.creationflags = CREATE_NO_WINDOW
 
-    #create a chrome tab with the selected options
-    chromeDriver = webdriver.Chrome(service = chrome_service, options = chrome_options)
+    # create a Chrome tab with the selected options
+    chrome_driver = webdriver.Chrome(service=chrome_service, options=chrome_options)
 
-    return chromeDriver
+    return chrome_driver
 
-def get_deals_urls(seleniumDriver):
 
-    dealsPage = "https://www.amazon.it/deals/"
+def get_deals_urls(selenium_driver):
+    deals_page = "https://www.amazon.it/deals/"
 
     print("Starting taking all urls")
 
     try:
-        seleniumDriver.get(dealsPage)
+        selenium_driver.get(deals_page)
 
-        #go to page with 50% or more discount
-        seleniumDriver.execute_script("arguments[0].click();", seleniumDriver.find_element(By.LINK_TEXT, "Sconto del 50% o più"))
+        # go to page with 50% or more discount
+        selenium_driver.execute_script("arguments[0].click();",
+                                       selenium_driver.find_element(By.LINK_TEXT, "Sconto del 50% o più"))
 
-        #get all deals (products and submenus)
+        # get all deals (products and submenus)
         elements_urls = []
         emergency_counter = 0
 
@@ -53,7 +58,7 @@ def get_deals_urls(seleniumDriver):
             if(emergency_counter > 120):
                 raise Exception("Error loading products in deals page")
 
-        deals_urls = []  #store all deals from main page and deals submenus
+        deals_urls = []  # store all deals from main page and deals submenus
         for url in elements_urls:
             if is_product(url):
                 deals_urls.append(url)
@@ -67,8 +72,6 @@ def get_deals_urls(seleniumDriver):
     except Exception as e:
         print(e)
 
-def get_submenus_deals_urls(seleniumDriver, submenu_url):
-    seleniumDriver.get(submenu_url)
 
 def get_submenus_deals_urls(submenu_url):
     #headers needed to avoid scraping blocking
@@ -87,17 +90,19 @@ def get_submenus_deals_urls(submenu_url):
 
     return elements_urls
 
-def is_product(url):  #products on sale have /dp/ in their link
+
+def is_product(url):  # products on sale have /dp/ in their link
     return "/dp/" in url
+
 
 def remove_duplicate_by_id(urls):
     for url in urls.copy():
-        product_id = re.search('dp\/(.*?)(?=\/|\?)', url).group(1)  #id between 'dp\' and ('?' or '\')
+        product_id = re.search('dp\/(.*?)(?=\/|\?)', url).group(1)  # id between 'dp\' and ('?' or '\')
 
-        count = 0  #remove url if same id present more than once
+        count = 0  # remove url if same id present more than once
         for url in urls:
-            if (product_id in url):
-                if(count == 0):
+            if product_id in url:
+                if count == 0:
                     count += 1
                 else:
                     urls.remove(url)
@@ -124,14 +129,14 @@ def get_product_info(product_url):
         image_link = product_page_content.xpath('//img[@id="landingImage"]/@src')[0]
 
         return {
-            "product_id" : product_id,
-            "title" : title,
-            "old_price" : old_price,
-            "new_price" : new_price,
-            "discount_rate" : discount_rate,
-            "image_link" : image_link
+            "product_id": product_id,
+            "title": title,
+            "old_price": old_price,
+            "new_price": new_price,
+            "discount_rate": discount_rate,
+            "image_link": image_link
         }
 
     except Exception as e:
-        print("Error at link:\n\n"+product_url+"\n\nbecause:\n\n"+str(e))
+        print("Error at link:\n\n" + product_url + "\n\nbecause:\n\n" + str(e))
         return None
