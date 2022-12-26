@@ -5,7 +5,6 @@ from selenium.webdriver.common.by import By  # get element by
 
 from webdriver_manager.chrome import \
     ChromeDriverManager  # automatically download the correct version of the chrome driver
-from subprocess import CREATE_NO_WINDOW  # do not open terminal when creating selenium instance
 
 import re  #use regex for selecting product id in link
 import time  #wait until new page loaded
@@ -21,7 +20,6 @@ def start_selenium():
 
     # download the most up-to-date chrome driver
     chrome_service = Service(ChromeDriverManager().install())
-    chrome_service.creationflags = CREATE_NO_WINDOW
 
     # create a Chrome tab with the selected options
     chrome_driver = webdriver.Chrome(service=chrome_service, options=chrome_options)
@@ -29,7 +27,7 @@ def start_selenium():
     return chrome_driver
 
 
-def get_deals(selenium_driver):
+def get_deals_ids(selenium_driver):
     deals_page = "https://www.amazon.it/deals/"
 
     print("Starting taking all urls")
@@ -85,7 +83,6 @@ def get_submenus_deals_urls(submenu_url):
 
     return [x for x in elements_urls if is_product(x)]  # remove all urls that are not deals (for example, share urls)
 
-
 def is_product(url):  # products have /dp/ in their url
     return "/dp/" in url
 
@@ -124,5 +121,5 @@ def get_product_info(product_id):
         }
 
     except Exception as e:
-        print("Error for product id:\n\n" + product_id + "\n\nbecause:\n\n" + str(e))
+        print("Error for product id:\n\n" + product_id + "\n\nbecause:\n\n" + str(e) + "\n Probably strange formatting of webpage.")
         return None

@@ -8,14 +8,14 @@ import telegram
 
 def get_deals():
     selenium_driver = apa.start_selenium()
-    deals = apa.get_deals(selenium_driver)  # get deals only once
+    deals_ids = apa.get_deals_ids(selenium_driver)  # get deals only once
     selenium_driver.quit()  # close everything that was created. Better not to keep driver open for much time
-    return deals
+    return deals_ids
 
 
-def get_random_product_info(deals, already_sent_products_ids):
-    selected_deal = random.choice(deals)  # select a random product to get the info
-    selected_product_info = apa.get_product_info(selected_deal)
+def get_random_product_info(deals_ids, already_sent_products_ids):
+    selected_deal_id = random.choice(deals_ids)  # select a random product to get the info
+    selected_product_info = apa.get_product_info(selected_deal_id)
 
     while True:  # get new product until the selected one is valid
         if (selected_product_info is not None) and (
@@ -23,11 +23,12 @@ def get_random_product_info(deals, already_sent_products_ids):
                     "product_id"] not in already_sent_products_ids):  # product valid and not already sent
             break
 
-        deals.remove(selected_deal)  # remove already used product
-        selected_deal = random.choice(deals)
-        selected_product_info = apa.get_product_info(random.choice(deals))
+        deals_ids.remove(selected_deal_id)  # remove already used product
+        selected_deal_id = random.choice(deals_ids)
+        selected_product_info = apa.get_product_info(random.choice(deals_ids))
 
     already_sent_products_ids.append(selected_product_info["product_id"])
+    # it is necessary to save used products ids and not remove them from the list because the list is recreated every few hours
 
     if len(already_sent_products_ids) == 100:
         already_sent_products_ids.pop(0)  # remove the oldest product sent if enough time has passed
@@ -55,7 +56,7 @@ if __name__ == '__main__':
     bot = telegram.Bot(token=botToken)
 
     already_sent_product_ids = []
-    deals = get_deals()
+    deals_ids = get_deals()
 
     channel_id = '@channelNameHere'
     start = time.time()
@@ -66,11 +67,11 @@ if __name__ == '__main__':
             time.sleep(3600)
             continue
 
-        if time.time() - start > 2 * 3600:
+        if time.time() - start > 2 * 3600:  # updated deals every 2 hours
             deals = get_deals()
             start = time.time()
 
-        selected_product_info = get_random_product_info(deals, already_sent_product_ids)
+        selected_product_info = get_random_product_info(deals_ids, already_sent_product_ids)
         send_deal(bot, selected_product_info, channel_id)
 
         time.sleep(random.randrange(60 * 20, 60 * 30))  # send every 20 to 30 minutes
