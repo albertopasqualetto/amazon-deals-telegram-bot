@@ -53,20 +53,21 @@ def get_deals_ids(selenium_driver):
             if emergency_counter > 120:
                 raise Exception("Error loading products in deals page")
 
-        deals_urls = []  # store all deals from main page and deals submenus
+        deals_urls = []  # store all deals urls from main page and from submenus
         for url in elements_urls:
             if is_product(url):
                 deals_urls.append(url)
             if ('/deal/' in url) or ('/browse/' in url):  # if an url leads to a submenu
                 deals_urls = deals_urls + get_submenus_deals_urls(url)  # add the deals urls from the submenus
 
-        print("All urls taken")
+        print("All urls taken. Extracting the ids")
 
         product_ids = [extract_product_id(url) for url in deals_urls if extract_product_id(url) is not None and extract_product_id(url) != '']
         return [*set(product_ids)]  # remove duplicates
 
     except Exception as e:
         print(e)
+        return []  # error, no ids taken
 
 
 def get_submenus_deals_urls(submenu_url):
@@ -79,9 +80,10 @@ def get_submenus_deals_urls(submenu_url):
 
     # only the deals are present if cookies are not accepted (no suggestions at the bottom of the page)
     elements_urls = submenu_page_content.xpath(
-        '//a[contains(@class, "a-link-normal")]/@href')  # TODO: these should be inserted in if is_product or is submenu condition
+        '//a[contains(@class, "a-link-normal")]/@href')
 
     return [x for x in elements_urls if is_product(x)]  # remove all urls that are not deals (for example, share urls)
+
 
 def is_product(url):  # products have /dp/ in their url
     return "/dp/" in url
@@ -104,7 +106,7 @@ def get_product_info(product_id):
     product_page_content = html.fromstring(product_page.content)
 
     try:
-        # elements may not be found if the deal is only for a subscription, if the deal ended or if there are options
+        # elements may not be found if the deal has options to choose from (page has only price range)
         title = product_page_content.xpath('//span[@id="productTitle"]/text()')[0].strip()
         old_price = product_page_content.xpath('//span[@data-a-strike="true"]//span[@aria-hidden="true"]/text()')[0]
         new_price = product_page_content.xpath('//span[contains(@class, "priceToPay")]//span[@class="a-offscreen"]/text()')[0]
@@ -121,5 +123,5 @@ def get_product_info(product_id):
         }
 
     except Exception as e:
-        print("Error for product id:\n\n" + product_id + "\n\nbecause:\n\n" + str(e) + "\n Probably strange formatting of webpage.")
+        print("\nError for product id:\n\n" + product_id + "\n\nbecause:\n\n" + str(e) + "\n Probably strange formatting of webpage.\n")
         return None

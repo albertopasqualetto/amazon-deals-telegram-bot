@@ -10,10 +10,13 @@ def get_deals():
     selenium_driver = apa.start_selenium()
     deals_ids = apa.get_deals_ids(selenium_driver)  # get deals only once
     selenium_driver.quit()  # close everything that was created. Better not to keep driver open for much time
-    return deals_ids
+    return deals_ids  # could be None or could contain the deals ids
 
 
 def get_random_product_info(deals_ids, already_sent_products_ids):
+    if(len(deals_ids) == 0):
+        return None
+
     selected_deal_id = random.choice(deals_ids)  # select a random product to get the info
     selected_product_info = apa.get_product_info(selected_deal_id)
 
@@ -23,12 +26,16 @@ def get_random_product_info(deals_ids, already_sent_products_ids):
                     "product_id"] not in already_sent_products_ids):  # product valid and not already sent
             break
 
-        deals_ids.remove(selected_deal_id)  # remove already used product
+        deals_ids.remove(selected_deal_id)  # remove invalid product
+
+        if(len(deals_ids) == 0):  # avoid infinte loop
+            return None
+
         selected_deal_id = random.choice(deals_ids)
         selected_product_info = apa.get_product_info(random.choice(deals_ids))
 
     already_sent_products_ids.append(selected_product_info["product_id"])
-    # it is necessary to save used products ids and not remove them from the list because the list is recreated every few hours
+    # it is necessary to save used products ids and not only remove them from the list because the list is recreated every few hours
 
     if len(already_sent_products_ids) == 100:
         already_sent_products_ids.pop(0)  # remove the oldest product sent if enough time has passed
@@ -37,8 +44,11 @@ def get_random_product_info(deals_ids, already_sent_products_ids):
 
 
 def send_deal(bot, product_info, chat_id):
-    emoticon = ['\U0000203C', '\U00002757', '\U0001F525', '\U000026A1']  # elements of message
-    starting_text = ['A soli ', 'Solamente ', 'Soltanto ', 'Appena ']
+    if(product_info == None):
+        return
+
+    emoticon = ['\U0000203C', '\U00002757', '\U0001F525', '\U000026A1', '\U00002728']  # elements of message
+    starting_text = ['A soli ', 'Solamente ', 'Soltanto ', 'Appena ', 'Incredibilmente solo ', 'Incredibilmente soltanto ']
     comparison_text = ['invece di ', 'al posto di ', 'piuttosto che ']
 
     caption = product_info["title"] + "\n\n"
@@ -46,6 +56,8 @@ def send_deal(bot, product_info, chat_id):
     caption += product_info["discount_rate"] + random.choice(emoticon) + "\n"
     caption += random.choice(starting_text) + product_info["new_price"] + ", " + random.choice(comparison_text) + \
                product_info["old_price"] + random.choice(emoticon)
+
+    print("\nMessage sent:\n" + caption + "\n")
 
     bot.send_photo(chat_id, product_info["image_link"], caption)
 
