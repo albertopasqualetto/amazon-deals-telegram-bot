@@ -75,7 +75,8 @@ if __name__ == '__main__':
 
     while True:
 
-        if time.localtime().tm_hour > 22 or time.localtime().tm_hour < 8:  # do not send messages during the night
+        if time.localtime().tm_hour > 22 or time.localtime().tm_hour < 8:  # do not send messages during the night. From 23.00 to 7.59
+            print("It is night. Not sending.")
             time.sleep(3600)
             continue
 

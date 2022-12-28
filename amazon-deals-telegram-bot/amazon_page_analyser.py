@@ -1,10 +1,7 @@
 from selenium import webdriver
 
-from selenium.webdriver.chrome.service import Service  # handle chrome driver
+from selenium.webdriver.chrome.service import Service  # handle chromium driver
 from selenium.webdriver.common.by import By  # get element by
-
-from webdriver_manager.chrome import \
-    ChromeDriverManager  # automatically download the correct version of the chrome driver
 
 import re  #use regex for selecting product id in link
 import time  #wait until new page loaded
@@ -14,17 +11,14 @@ from lxml import html
 
 
 def start_selenium():
-    chrome_options = webdriver.ChromeOptions()  # add the debug options you need
-    chrome_options.add_argument("--headless")  # do not open chrome gui
-    chrome_options.add_argument('--disable-gpu')  # disable hardware acceleration for compatibility reasons
+    chromium_option = webdriver.ChromeOptions()  # add the debug options you need
+    chromium_option.add_argument("--headless")  # do not open chromium gui
+    chromium_option.add_argument('--disable-gpu')  # disable hardware acceleration for compatibility reasons
 
-    # download the most up-to-date chrome driver
-    chrome_service = Service(ChromeDriverManager().install())
+    # create a chromium tab with the selected options
+    chromium_driver = webdriver.Chrome(executable_path=r"path\to\chromedriver.exe", options=chromium_option)
 
-    # create a Chrome tab with the selected options
-    chrome_driver = webdriver.Chrome(service=chrome_service, options=chrome_options)
-
-    return chrome_driver
+    return chromium_driver
 
 
 def get_deals_ids(selenium_driver):
@@ -37,7 +31,7 @@ def get_deals_ids(selenium_driver):
 
         # go to page with 50% or more discount
         selenium_driver.execute_script("arguments[0].click();",
-                                       selenium_driver.find_element(By.LINK_TEXT, "Sconto del 50% o più"))
+                                       selenium_driver.find_element(By.PARTIAL_LINK_TEXT, "Sconto del 50%"))  # not using full text to avoid problems with utf-8
 
         # get all deals (products and submenus)
         elements_urls = []
