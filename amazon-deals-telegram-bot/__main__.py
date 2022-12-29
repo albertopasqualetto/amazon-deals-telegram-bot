@@ -52,7 +52,7 @@ def send_deal(bot, product_info, chat_id):
     comparison_text = ['invece di ', 'al posto di ', 'piuttosto che ']
 
     caption = product_info["title"] + "\n\n"
-    caption += "https://www.amazon.it/dp/" + product_info["product_id"] + "\n\n"  # add affiliate code here
+    caption += apa.url_from_id(product_info["product_id"]) + "\n\n"  # add affiliate code here
     caption += product_info["discount_rate"] + random.choice(emoticon) + "\n"
     caption += random.choice(starting_text) + product_info["new_price"] + ", " + random.choice(comparison_text) + \
                product_info["old_price"] + random.choice(emoticon)
