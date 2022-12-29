@@ -107,7 +107,7 @@ def get_product_info(product_id):
         old_price = product_page_content.xpath('//span[@data-a-strike="true"]//span[@aria-hidden="true"]/text()')[0]
         new_price = product_page_content.xpath('//span[contains(@class, "priceToPay")]//span[@class="a-offscreen"]/text()')[0]
         discount_rate = product_page_content.xpath('//span[contains(@class, "savingsPercentage")]/text()')[0]
-        image_link = product_page_content.xpath('//img[@id="landingImage"]/@src')[0]
+        image_link = product_page_content.xpath('//img[@id="landingImage"]/@src')[0].split("._")[0] + ".jpg"    # remove latter part of image link to get the highest resolution
 
         return {
             "product_id": product_id,
