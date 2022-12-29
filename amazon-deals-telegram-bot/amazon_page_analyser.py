@@ -66,9 +66,8 @@ def get_deals_ids(selenium_driver):
 
 def get_submenus_deals_urls(submenu_url):
     # headers needed to avoid scraping blocking
-    headers = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:12.0) Gecko/20100101 Firefox/12.0', }
+    headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_5) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/12.1.1 Safari/605.1.15', }
     submenu_page = requests.post(submenu_url, headers=headers)
-    submenu_page.raise_for_status()
 
     submenu_page_content = html.fromstring(submenu_page.content)
 
@@ -94,13 +93,16 @@ def url_from_id(product_id):
 def get_product_info(product_id):
     # headers needed to avoid scraping blocking
     headers = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:12.0) Gecko/20100101 Firefox/12.0', }
-    product_page = requests.post(url_from_id(product_id), headers=headers)
-    product_page.raise_for_status()
+    params = {
+        'th' : '1',
+        'psc' : '1'
+    }  # using params to not waste links where there are options TODO
+    product_page = requests.post(url_from_id(product_id), headers=headers, params=params)
 
     product_page_content = html.fromstring(product_page.content)
 
     try:
-        # elements may not be found if the deal has options to choose from (page has only price range)
+        # elements may not be found if the deal has options to choose from (page has only price range) TODO (make only subscriptions not valid)
         title = product_page_content.xpath('//span[@id="productTitle"]/text()')[0].strip()
         old_price = product_page_content.xpath('//span[@data-a-strike="true"]//span[@aria-hidden="true"]/text()')[0]
         new_price = product_page_content.xpath('//span[contains(@class, "priceToPay")]//span[@class="a-offscreen"]/text()')[0]

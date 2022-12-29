@@ -8,7 +8,7 @@ def get_deals():
     selenium_driver.quit()  # close everything that was created. Better not to keep driver open for much time
     return deals_ids  # could be None or could contain the deals ids
 
-def test_all_ids(deals_ids):
+def test_all_ids(deals_ids):  # WARNING: Uses all bandwith possible
     # array are needed because threads cannot return values
     valid_ids = []  # store all valid ids
     discounts = []  # store the discounts to do the average later
