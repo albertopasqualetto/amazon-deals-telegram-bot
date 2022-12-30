@@ -68,10 +68,10 @@ def get_submenus_deals_urls(submenu_url):
     # headers needed to avoid scraping blocking
     headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_5) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/12.1.1 Safari/605.1.15', }
     submenu_page = requests.post(submenu_url, headers=headers)
-
+    page = requests.get(page_url, headers=headers)
     submenu_page_content = html.fromstring(submenu_page.content)
 
-    # only the deals are present if cookies are not accepted (no suggestions at the bottom of the page)
+    # only deals which are present if cookies are not accepted (no suggestions at the bottom of the page)
     elements_urls = submenu_page_content.xpath(
         '//a[contains(@class, "a-link-normal")]/@href')
 
@@ -94,15 +94,15 @@ def get_product_info(product_id):
     # headers needed to avoid scraping blocking
     headers = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:12.0) Gecko/20100101 Firefox/12.0', }
     params = {
-        'th' : '1',
-        'psc' : '1'
-    }  # using params to not waste links where there are options TODO
-    product_page = requests.post(url_from_id(product_id), headers=headers, params=params)
+        'th': '1',
+        'psc': '1'
+    }  # using params to not waste links where there are variants TODO
+    product_page = requests.get(url_from_id(product_id), headers=headers, params=params)
 
     product_page_content = html.fromstring(product_page.content)
 
     try:
-        # elements may not be found if the deal has options to choose from (page has only price range) TODO (make only subscriptions not valid)
+        # elements may not be found if the deal has variants (page has only price range) TODO (make only subscriptions not valid)
         title = product_page_content.xpath('//span[@id="productTitle"]/text()')[0].strip()
         old_price = product_page_content.xpath('//span[@data-a-strike="true"]//span[@aria-hidden="true"]/text()')[0]
         new_price = product_page_content.xpath('//span[contains(@class, "priceToPay")]//span[@class="a-offscreen"]/text()')[0]
