@@ -5,6 +5,8 @@ import time
 
 import telegram
 
+import json
+
 
 def get_random_product_info(deals_ids, already_sent_products_ids):
     if(len(deals_ids) == 0):
@@ -57,27 +59,33 @@ def send_deal(bot, product_info, chat_id):
 
 if __name__ == '__main__':
 
+    new_collection_time = None
+    already_sent_product_ids = []
+
+    # if json exist
+    try:
+        with open("deals_ids.json", "r") as file:
+            deals_dict = json.load(file)
+            deals_ids = deals_dict["deals_ids"]
+            already_sent_product_ids = deals_dict["already_sent_product_ids"]
+            if time.time() - deals_ids["collection_time"] > 2*3600:     # update deals every 2 hours
+                deals_ids = apa.get_all_deals_ids()
+                new_collection_time = time.time()
+    except OSError as e:
+        deals_ids = apa.get_all_deals_ids()
+        new_collection_time = time.time()
+
     botToken = 'botTokenHere'
     bot = telegram.Bot(token=botToken)
 
-    already_sent_product_ids = []
-    deals_ids = apa.get_all_deals_ids()
-
     channel_id = '@channelNameHere'
-    start = time.time()
 
-    while True:
+    selected_product_info = get_random_product_info(deals_ids, already_sent_product_ids)
+    send_deal(bot, selected_product_info, channel_id)
 
-        if time.localtime().tm_hour > 22 or time.localtime().tm_hour < 8:  # do not send messages during the night. From 23.00 to 7.59
-            print("It is night. Not sending.")
-            time.sleep(3600)
-            continue
-
-        if time.time() - start > 2 * 3600:  # updated deals every 2 hours
-            deals = apa.get_all_deals_ids()
-            start = time.time()
-
-        selected_product_info = get_random_product_info(deals_ids, already_sent_product_ids)
-        send_deal(bot, selected_product_info, channel_id)
-
-        time.sleep(random.randrange(60 * 20, 60 * 30))  # send every 20 to 30 minutes
+    # save the new deals ids and already sent products ids in a json file
+    deals_dict = {"collection_time": new_collection_time if new_collection_time else deals_ids["collection_time"],
+                  "deals_ids": deals_ids,
+                  "already_sent_product_ids": already_sent_product_ids}
+    with open("deals_ids.json", "w") as file:
+        json.dump(deals_dict, file)

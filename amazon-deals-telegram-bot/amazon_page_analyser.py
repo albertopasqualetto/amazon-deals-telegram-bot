@@ -11,12 +11,12 @@ from lxml import html
 
 
 def start_selenium():
-    chromium_option = webdriver.ChromeOptions()  # add the debug options you need
-    chromium_option.add_argument("--headless")  # do not open chromium gui
-    chromium_option.add_argument('--disable-gpu')  # disable hardware acceleration for compatibility reasons
+    chromium_options = webdriver.ChromeOptions()  # add the debug options you need
+    chromium_options.add_argument("--headless")  # do not open chromium gui
+    chromium_options.add_argument('--disable-gpu')  # disable hardware acceleration for compatibility reasons
 
     # create a Chromium tab with the selected options
-    chromium_driver = webdriver.Chrome(executable_path=r"path\to\chromedriver.exe", options=chromium_option)
+    chromium_driver = webdriver.Chrome(executable_path=r"path\to\chromedriver.exe", options=chromium_options)
 
     return chromium_driver
 
