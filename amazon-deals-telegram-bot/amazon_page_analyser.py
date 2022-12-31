@@ -22,14 +22,8 @@ def start_selenium():
 
 
 def get_all_deals_ids():
-    selenium_driver = start_selenium()
-    deals_ids = get_deals_page_ids(selenium_driver)  # get deals only once
-    selenium_driver.quit()  # close everything that was created. Better not to keep driver open for much time
-    return deals_ids  # could be None or could contain the deals ids
-
-
-def get_deals_page_ids(selenium_driver):
     deals_page = "https://www.amazon.it/deals/"
+    selenium_driver = start_selenium()
 
     print("Starting taking all urls")
 
@@ -41,7 +35,7 @@ def get_deals_page_ids(selenium_driver):
                                        selenium_driver.find_element(By.PARTIAL_LINK_TEXT,
                                                                     "Sconto del 50%"))  # not using full text to avoid problems with utf-8
 
-        # get all deals (products and submenus)
+        # get all deals elements urls (products and submenus)
         elements_urls = []
         emergency_counter = 0
 
@@ -66,10 +60,13 @@ def get_deals_page_ids(selenium_driver):
 
         product_ids = [extract_product_id(url) for url in deals_urls if
                        extract_product_id(url) is not None and extract_product_id(url) != '']
+
+        selenium_driver.quit()  # close everything that was created. Better not to keep driver open for much time
         return [*set(product_ids)]  # remove duplicates
 
     except Exception as e:
         print(e)
+        selenium_driver.quit()  # close everything that was created. Better not to keep driver open for much time
         return []  # error, no ids taken
 
 
@@ -105,7 +102,7 @@ def get_product_info(product_id):
         'th': '1',
         'psc': '1'
     }  # using params to not waste links where there are variants TODO
-    product_page = requests.get(url_from_id(product_id), headers=headers, params=params)
+    product_page = requests.get(url_from_id(product_id), headers=headers, params=params)  # necessary to use get and not post when using params
 
     product_page_content = html.fromstring(product_page.content)
 
