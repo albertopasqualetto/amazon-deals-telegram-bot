@@ -5,13 +5,6 @@ import threading
 import json
 
 
-def get_deals():
-    selenium_driver = apa.start_selenium()
-    deals_ids = apa.get_deals_ids(selenium_driver)  # get deals only once
-    selenium_driver.quit()  # close everything that was created. Better not to keep driver open for much time
-    return deals_ids  # could be None or could contain the deals ids
-
-
 def test_all_ids(deals_ids, logging=False):  # WARNING: Uses all bandwidth possible
     # array are needed because threads cannot return values
     valid_ids = []  # store all valid ids
@@ -51,5 +44,5 @@ def test_single_id(id, valid_ids, discounts):
 
 
 if __name__ == '__main__':
-    deals_ids = get_deals()
+    deals_ids = apa.get_all_deals_ids()
     test_all_ids(deals_ids, logging=True)

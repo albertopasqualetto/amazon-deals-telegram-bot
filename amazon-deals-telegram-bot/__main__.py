@@ -6,13 +6,6 @@ import time
 import telegram
 
 
-def get_deals():
-    selenium_driver = apa.start_selenium()
-    deals_ids = apa.get_deals_ids(selenium_driver)  # get deals only once
-    selenium_driver.quit()  # close everything that was created. Better not to keep driver open for much time
-    return deals_ids  # could be None or could contain the deals ids
-
-
 def get_random_product_info(deals_ids, already_sent_products_ids):
     if(len(deals_ids) == 0):
         return None
@@ -68,7 +61,7 @@ if __name__ == '__main__':
     bot = telegram.Bot(token=botToken)
 
     already_sent_product_ids = []
-    deals_ids = get_deals()
+    deals_ids = apa.get_all_deals_ids()
 
     channel_id = '@channelNameHere'
     start = time.time()
@@ -81,7 +74,7 @@ if __name__ == '__main__':
             continue
 
         if time.time() - start > 2 * 3600:  # updated deals every 2 hours
-            deals = get_deals()
+            deals = apa.get_all_deals_ids()
             start = time.time()
 
         selected_product_info = get_random_product_info(deals_ids, already_sent_product_ids)
