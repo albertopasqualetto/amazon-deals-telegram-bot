@@ -130,3 +130,6 @@ dmypy.json
 
 # Passwords
 passwords.txt
+
+# Last ids taken
+deals_ids.json
