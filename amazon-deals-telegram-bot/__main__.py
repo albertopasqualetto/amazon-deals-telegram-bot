@@ -23,7 +23,7 @@ def get_random_product_info(deals_ids, already_sent_products_ids):
 
         deals_ids.remove(selected_deal_id)  # remove invalid product
 
-        if(len(deals_ids) == 0):  # avoid infinte loop
+        if(len(deals_ids) == 0):  # avoid infinte loop if there are no more products
             return None
 
         selected_deal_id = random.choice(deals_ids)
@@ -56,7 +56,9 @@ def send_deal(bot, product_info, chat_id):
 
     bot.send_photo(chat_id, product_info["image_link"], caption)
 
-
+# This script is executed every time a new message needs to be sent. For this reason it is necessary to save
+# Data in a json file to avoid scraping every time the deals, and to avoid sending the same deals back to back.
+# An alternative would be to have a while loop with a delay, but it would not be optimised for cron.
 if __name__ == '__main__':
 
     new_collection_time = None
@@ -64,13 +66,17 @@ if __name__ == '__main__':
 
     # if json exist
     try:
+
         with open("deals_ids.json", "r") as file:
+
             deals_dict = json.load(file)
             deals_ids = deals_dict["deals_ids"]
             already_sent_product_ids = deals_dict["already_sent_product_ids"]
+
             if time.time() - deals_ids["collection_time"] > 2*3600:     # update deals every 2 hours
                 deals_ids = apa.get_all_deals_ids()
                 new_collection_time = time.time()
+
     except OSError as e:
         deals_ids = apa.get_all_deals_ids()
         new_collection_time = time.time()
@@ -83,7 +89,7 @@ if __name__ == '__main__':
     selected_product_info = get_random_product_info(deals_ids, already_sent_product_ids)
     send_deal(bot, selected_product_info, channel_id)
 
-    # save the new deals ids and already sent products ids in a json file
+    # save deals collection time, the ids of new deals and the ids of the already sent products in a json file
     deals_dict = {"collection_time": new_collection_time if new_collection_time else deals_ids["collection_time"],
                   "deals_ids": deals_ids,
                   "already_sent_product_ids": already_sent_product_ids}
