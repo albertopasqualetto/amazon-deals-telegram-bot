@@ -72,7 +72,7 @@ if __name__ == '__main__':
             deals_dict = json.load(file)
             deals_ids = deals_dict["deals_ids"]
             already_sent_product_ids = deals_dict["already_sent_product_ids"]
-            if time.time() - int(deals_ids["collection_time"]) > 2*3600:     # update deals every 2 hours
+            if time.time() - float(deals_dict["collection_time"]) > 2*3600:     # update deals every 2 hours
                 deals_ids = apa.get_all_deals_ids()
                 new_collection_time = time.time()
 
