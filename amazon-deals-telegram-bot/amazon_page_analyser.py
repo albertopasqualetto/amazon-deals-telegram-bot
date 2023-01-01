@@ -3,6 +3,9 @@ from selenium import webdriver
 from selenium.webdriver.chrome.service import Service  # handle chromium driver
 from selenium.webdriver.common.by import By  # get element by
 
+from selenium.webdriver.support.wait import WebDriverWait  # wait for the 50% deals page to load
+from selenium.webdriver.support import expected_conditions as EC
+
 import re  # use regex for selecting product id in link
 import time  # wait until new page loaded
 
@@ -30,24 +33,22 @@ def get_all_deals_ids():
     try:
         selenium_driver.get(deals_page)
 
-        # go to page with 50% or more discount
+        # go to page with 50% or more deals
         selenium_driver.execute_script("arguments[0].click();",
                                        selenium_driver.find_element(By.PARTIAL_LINK_TEXT,
                                                                     "Sconto del 50%"))  # not using full text to avoid problems with utf-8
 
+        # when the page with the deals above 50% loads, the deals become clickable.
+        # Checking for document.readyState would not work (is already ready, just loads different deals)
+        # Checking for url change would not work, because it changes before the new deals are loaded
+        WebDriverWait(selenium_driver, 60).until(
+            EC.element_to_be_clickable((By.CSS_SELECTOR, "a[class*='DealCard']")))  # timeout connect after 60 seconds
+
         # get all deals elements urls (products and submenus)
         elements_urls = []
-        emergency_counter = 0
-
-        while len(elements_urls) == 0:  # wait until pages loads the products with the wanted discount
-            # get all urls with <a> tag with a css class that contains 'DealCard'. There are both immediate deals and submenus with deals
-            elements_urls = [e.get_attribute("href") for e in
-                             selenium_driver.find_elements(By.CSS_SELECTOR, "a[class*='DealCard']")]
-            time.sleep(0.5)
-
-            emergency_counter += 1  # avoid infinite loop if page does not load
-            if emergency_counter > 120:
-                raise Exception("Error loading products in deals page")
+        # get all urls with <a> tag with a css class that contains 'DealCard'. There are both immediate deals and submenus with deals
+        elements_urls = [e.get_attribute("href") for e in
+                         selenium_driver.find_elements(By.CSS_SELECTOR, "a[class*='DealCard']")]
 
         deals_urls = []  # store all deals urls from main page and from submenus
         for url in elements_urls:
