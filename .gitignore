@@ -133,3 +133,6 @@ passwords.txt
 
 # Last ids taken
 deals_ids.json
+
+# Test file
+tests_log.json
