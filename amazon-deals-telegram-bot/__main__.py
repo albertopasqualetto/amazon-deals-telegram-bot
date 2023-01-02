@@ -3,6 +3,8 @@ import amazon_page_analyser as apa
 import random
 import time
 
+from dotenv import dotenv_values
+
 import telegram
 
 import json
@@ -61,6 +63,8 @@ def send_deal(bot, product_info, chat_id):
 # An alternative would be to have a while loop with a delay, but it would not be optimised for cron.
 if __name__ == '__main__':
 
+    config = dotenv_values(".env")  # TODO it may be better using environment variables if using containers
+
     new_collection_time = None
     already_sent_product_ids = []
 
@@ -80,13 +84,10 @@ if __name__ == '__main__':
         deals_ids = apa.get_all_deals_ids()
         new_collection_time = time.time()
 
-    botToken = 'botTokenHere'
-    bot = telegram.Bot(token=botToken)
-
-    channel_id = '@channelNameHere'
+    bot = telegram.Bot(token=config["AMAZON_DEALS_TG_BOT_TOKEN"])
 
     selected_product_info = get_random_product_info(deals_ids, already_sent_product_ids)
-    send_deal(bot, selected_product_info, channel_id)
+    send_deal(bot, selected_product_info, config["AMAZON_DEALS_TG_CHANNEL_ID"])
 
     # save deals collection time, the ids of new deals and the ids of the already sent products in a json file
     deals_dict = {"collection_time": new_collection_time if new_collection_time else deals_ids["collection_time"],
