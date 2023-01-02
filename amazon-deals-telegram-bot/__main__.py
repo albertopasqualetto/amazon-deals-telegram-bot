@@ -90,8 +90,8 @@ if __name__ == '__main__':
     send_deal(bot, selected_product_info, config["AMAZON_DEALS_TG_CHANNEL_ID"])
 
     # save deals collection time, the ids of new deals and the ids of the already sent products in a json file
-    deals_dict = {"collection_time": new_collection_time if new_collection_time else deals_ids["collection_time"],
+    new_deals_dict = {"collection_time": new_collection_time if new_collection_time else deals_dict["collection_time"],
                   "deals_ids": deals_ids,
                   "already_sent_product_ids": already_sent_product_ids}
     with open("deals_ids.json", "w") as file:
-        json.dump(deals_dict, file)
+        json.dump(new_deals_dict, file)
