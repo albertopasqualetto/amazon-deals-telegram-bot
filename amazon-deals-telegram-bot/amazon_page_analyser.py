@@ -40,7 +40,7 @@ def get_all_deals_ids():
         # Checking for document.readyState would not work (is already ready, just loads different deals)
         # Checking for url change would not work, because it changes before the new deals are loaded
         WebDriverWait(selenium_driver, 60).until(
-            EC.element_to_be_clickable((By.CSS_SELECTOR, "a[class*='DealCard']")))  # timeout connect after 60 seconds
+            EC.presence_of_element_located((By.CSS_SELECTOR, "a[class*='DealCard']")))  # timeout connect after 60 seconds
 
         # get all urls with <a> tag with a css class that contains 'DealCard'. There are both immediate deals and submenus with deals
         elements_urls = [e.get_attribute("href") for e in

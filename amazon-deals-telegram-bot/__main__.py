@@ -34,8 +34,8 @@ def get_random_product_info(deals_ids, already_sent_products_ids):
     already_sent_products_ids.append(selected_product_info["product_id"])
     # it is necessary to save used products ids and not only remove them from the list because the list is recreated every few hours
 
-    if len(already_sent_products_ids) == 100:
-        already_sent_products_ids.pop(0)  # remove the oldest product sent if enough time has passed
+    while(len(already_sent_products_ids) >= 100):
+        already_sent_products_ids.pop(0)  # remove the oldest products sent if enough time has passed
 
     return selected_product_info
 
