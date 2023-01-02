@@ -4,6 +4,9 @@ import threading
 
 import json
 
+from dotenv import load_dotenv  # load variables from .env file
+import os
+
 
 def test_all_ids(deals_ids, logging=False):  # WARNING: Uses all bandwidth possible
     # array are needed because threads cannot return values
@@ -44,5 +47,6 @@ def test_single_id(id, valid_ids, discounts):
 
 
 if __name__ == '__main__':
-    deals_ids = apa.get_all_deals_ids()
+    load_dotenv(".env")
+    deals_ids = apa.get_all_deals_ids(os.environ.get("AMAZON_DEALS_WEBDRIVER_PATH"))
     test_all_ids(deals_ids, logging=True)
