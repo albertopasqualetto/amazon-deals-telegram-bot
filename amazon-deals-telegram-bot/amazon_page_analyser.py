@@ -1,13 +1,11 @@
 from selenium import webdriver
 
-from selenium.webdriver.chrome.service import Service  # handle chromium driver
 from selenium.webdriver.common.by import By  # get element by
 
 from selenium.webdriver.support.wait import WebDriverWait  # wait for the 50% deals page to load
 from selenium.webdriver.support import expected_conditions as EC
 
 import re  # use regex for selecting product id in link
-import time  # wait until new page loaded
 
 import requests  # lighter way to retrieve information from html only (no js and css loaded)
 from lxml import html
@@ -44,8 +42,6 @@ def get_all_deals_ids():
         WebDriverWait(selenium_driver, 60).until(
             EC.element_to_be_clickable((By.CSS_SELECTOR, "a[class*='DealCard']")))  # timeout connect after 60 seconds
 
-        # get all deals elements urls (products and submenus)
-        elements_urls = []
         # get all urls with <a> tag with a css class that contains 'DealCard'. There are both immediate deals and submenus with deals
         elements_urls = [e.get_attribute("href") for e in
                          selenium_driver.find_elements(By.CSS_SELECTOR, "a[class*='DealCard']")]
@@ -108,7 +104,7 @@ def get_product_info(product_id):
     product_page_content = html.fromstring(product_page.content)
 
     try:
-        # elements may not be found if the deal has variants (page has only price range) TODO (make only subscriptions not valid)
+        # elements may not be found if the deal has variants (page has only price range) TODO (only leave subscriptions not valid)
         title = product_page_content.xpath('//span[@id="productTitle"]/text()')[0].strip()
         old_price = product_page_content.xpath('//span[@data-a-strike="true"]//span[@aria-hidden="true"]/text()')[0]
         new_price = product_page_content.xpath('//span[contains(@class, "priceToPay")]//span[@class="a-offscreen"]/text()')[0]
