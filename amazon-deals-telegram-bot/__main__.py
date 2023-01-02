@@ -48,15 +48,15 @@ def send_deal(bot, product_info, chat_id):
     starting_text = ['A soli ', 'Solamente ', 'Soltanto ', 'Appena ', 'Incredibilmente solo ', 'Incredibilmente soltanto ']
     comparison_text = ['invece di ', 'al posto di ', 'piuttosto che ']
 
-    caption = product_info["title"] + "\n\n"
-    caption += apa.url_from_id(product_info["product_id"]) + "\n\n"  # add affiliate code here
-    caption += product_info["discount_rate"] + random.choice(emoticon) + "\n"
-    caption += random.choice(starting_text) + product_info["new_price"] + ", " + random.choice(comparison_text) + \
-               product_info["old_price"] + random.choice(emoticon)
+    caption = "<b>" + product_info["title"] + "</b>" + "\n\n"
+    caption += "\U0001F449 " + apa.url_from_id(product_info["product_id"]) + "\n\n"  # add affiliate code here
+    caption += random.choice(emoticon) + product_info["discount_rate"] + "\n"
+    caption += "\U0001F4B6 " + random.choice(starting_text) + product_info["new_price"] + ", " + random.choice(comparison_text) + \
+               "<del>" + product_info["old_price"] + "</del> " + random.choice(emoticon)
+
+    bot.send_photo(chat_id, product_info["image_link"], caption, parse_mode="HTML")
 
     print("\nMessage sent:\n" + caption + "\n")
-
-    bot.send_photo(chat_id, product_info["image_link"], caption)
 
 # This script is executed every time a new message needs to be sent. For this reason it is necessary to save
 # Data in a json file to avoid scraping every time the deals, and to avoid sending the same deals back to back.
@@ -87,7 +87,7 @@ if __name__ == '__main__':
     bot = telegram.Bot(token=config["AMAZON_DEALS_TG_BOT_TOKEN"])
 
     selected_product_info = get_random_product_info(deals_ids, already_sent_product_ids)
-    send_deal(bot, selected_product_info, config["AMAZON_DEALS_TG_CHANNEL_ID"])
+    send_deal(bot, selected_product_info, chat_id=config["AMAZON_DEALS_TG_CHANNEL_ID"])
 
     # save deals collection time, the ids of new deals and the ids of the already sent products in a json file
     new_deals_dict = {"collection_time": new_collection_time if new_collection_time else deals_dict["collection_time"],
