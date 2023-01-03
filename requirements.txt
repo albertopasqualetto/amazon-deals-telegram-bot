@@ -3,3 +3,4 @@ selenium~=4.7.2
 lxml~=4.9.2
 python-telegram-bot~=13.15
 python-dotenv~=0.21.0
+babel~=2.11.0
