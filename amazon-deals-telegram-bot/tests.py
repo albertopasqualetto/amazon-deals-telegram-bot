@@ -45,6 +45,8 @@ def test_single_id(id, valid_ids, discounts):
         valid_ids.append(id)
         discounts.append(int(product_info["discount_rate"][1:-1]))  # remove - and % from discount rate
 
+    return product_info
+
 
 if __name__ == '__main__':
     load_dotenv(".env")
