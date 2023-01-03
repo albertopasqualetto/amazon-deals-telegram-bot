@@ -14,7 +14,6 @@ from lxml import html
 def start_selenium(webdriver_path):
     chromium_options = webdriver.ChromeOptions()  # add the debug options you need
     chromium_options.add_argument("--headless")  # do not open chromium gui
-    chromium_options.add_argument('--disable-gpu')  # disable hardware acceleration for compatibility reasons
 
     # create a Chromium tab with the selected options
     chromium_driver = webdriver.Chrome(executable_path=webdriver_path, options=chromium_options)

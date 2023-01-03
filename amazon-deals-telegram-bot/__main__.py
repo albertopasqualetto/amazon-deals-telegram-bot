@@ -64,7 +64,7 @@ def send_deal(bot, product_info, chat_id):
 # An alternative would be to have a while loop with a delay, but it would not be optimised for cron.
 if __name__ == '__main__':
 
-    load_dotenv(".env")  # TODO it may be better using environment variables if using containers
+    load_dotenv(".env")
 
     new_collection_time = None
     already_sent_product_ids = []
@@ -92,7 +92,7 @@ if __name__ == '__main__':
 
     # save deals collection time, the ids of new deals and the ids of the already sent products in a json file
     new_deals_dict = {"collection_time": new_collection_time if new_collection_time else deals_dict["collection_time"],
-                  "deals_ids": deals_ids,
-                  "already_sent_product_ids": already_sent_product_ids}
+                      "deals_ids": deals_ids,
+                      "already_sent_product_ids": already_sent_product_ids}
     with open("deals_ids.json", "w") as file:
         json.dump(new_deals_dict, file)
