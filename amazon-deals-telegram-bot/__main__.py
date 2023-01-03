@@ -78,7 +78,7 @@ if __name__ == '__main__':
             deals_ids = deals_dict["deals_ids"]
             already_sent_product_ids = deals_dict["already_sent_product_ids"]
             if time.time() - float(deals_dict["collection_time"]) > 2*3600:     # update deals every 2 hours
-                deals_ids = apa.get_all_deals_ids()
+                deals_ids = apa.get_all_deals_ids(os.environ.get("AMAZON_DEALS_WEBDRIVER_PATH"))
                 new_collection_time = time.time()
 
     except OSError as e:
