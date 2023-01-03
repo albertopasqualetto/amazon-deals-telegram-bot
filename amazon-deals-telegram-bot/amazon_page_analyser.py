@@ -106,8 +106,8 @@ def get_product_info(product_id):
         # elements may not be found if the deal has variants (page has only price range) TODO (only leave subscriptions not valid)
         title = product_page_content.xpath('//span[@id="productTitle"]/text()')[0].strip()
         old_price = product_page_content.xpath('//span[@data-a-strike="true"]//span[@aria-hidden="true"]/text()')[0]
-        new_price = product_page_content.xpath('//span[contains(@class, "priceToPay")]//span[@class="a-offscreen"]/text()')[0]
-        discount_rate = product_page_content.xpath('//span[contains(@class, "savingsPercentage")]/text()')[0]
+        new_price = product_page_content.xpath('//span[contains(translate(@class, "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz"), "pricetopay")]//span[@class="a-offscreen"]/text()')[0]   # translate() to make case-insensitive (class may be priceToPay or apexPriceToPay)
+        discount_rate = str(round(100 - (float(new_price.replace(',', '.').strip('€')) / float(old_price.replace(',', '.').strip('€'))) * 100)) + "%"   # round to int and add % sign
         image_link = product_page_content.xpath('//img[@id="landingImage"]/@src')[0].split("._")[0] + ".jpg"  # remove latter part of image link to get the highest resolution
 
         return {
