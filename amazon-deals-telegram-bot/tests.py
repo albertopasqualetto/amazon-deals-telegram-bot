@@ -38,7 +38,13 @@ def test_all_ids(deals_ids, logging=False):  # WARNING: Uses all bandwidth possi
                       file)
 
 
-def test_single_id(id, valid_ids, discounts):
+def test_single_id(id, valid_ids = None, discounts = None):
+    if valid_ids is None:
+        valid_ids = []
+
+    if discounts is None:
+        discounts = []
+
     product_info = apa.get_product_info(id)
 
     if product_info is not None:
