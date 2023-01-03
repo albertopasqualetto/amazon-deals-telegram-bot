@@ -10,6 +10,8 @@ import re  # use regex for selecting product id in link
 import requests  # lighter way to retrieve information from html only (no js and css loaded)
 from lxml import html
 
+from babel.numbers import parse_decimal  # from price to number
+
 
 def start_selenium(webdriver_path):
     chromium_options = webdriver.ChromeOptions()  # add the debug options you need
@@ -97,17 +99,22 @@ def get_product_info(product_id):
     params = {
         'th': '1',
         'psc': '1'
-    }  # using params to not waste links where there are variants TODO
+    }  # using params to not waste links where there are variants
     product_page = requests.get(url_from_id(product_id), headers=headers, params=params)  # necessary to use get and not post when using params
 
     product_page_content = html.fromstring(product_page.content)
 
     try:
-        # elements may not be found if the deal has variants (page has only price range) TODO (only leave subscriptions not valid)
+        # elements may not be found if the deal is a subscription (regular purchase)
         title = product_page_content.xpath('//span[@id="productTitle"]/text()')[0].strip()
         old_price = product_page_content.xpath('//span[@data-a-strike="true"]//span[@aria-hidden="true"]/text()')[0]
-        new_price = product_page_content.xpath('//span[contains(translate(@class, "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz"), "pricetopay")]//span[@class="a-offscreen"]/text()')[0]   # translate() to make case-insensitive (class may be priceToPay or apexPriceToPay)
-        discount_rate = str(round(100 - (float(new_price.replace(',', '.').strip('€')) / float(old_price.replace(',', '.').strip('€'))) * 100)) + "%"   # round to int and add % sign
+
+        # translate() to make case-insensitive (class may be priceToPay or apexPriceToPay)
+        new_price = product_page_content.xpath('//span[contains(translate(@class, "PRICETOPAY", "pricetopay"), "pricetopay")]//span[@class="a-offscreen"]/text()')[0]
+
+        # calculate discount rate from new and old prices. Round to int and add '-' and '%' signs
+        discount_rate = "-" + str(round(100 - (parse_decimal(new_price.strip('€'), locale='it') / parse_decimal(old_price.strip('€'), locale='it')) * 100)) + "%"
+
         image_link = product_page_content.xpath('//img[@id="landingImage"]/@src')[0].split("._")[0] + ".jpg"  # remove latter part of image link to get the highest resolution
 
         return {
