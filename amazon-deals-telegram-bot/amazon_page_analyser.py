@@ -4,6 +4,7 @@ from selenium.webdriver.common.by import By  # get element by
 
 from selenium.webdriver.support.wait import WebDriverWait  # wait for the 50% deals page to load
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.chrome.service import Service
 
 import re  # use regex for selecting product id in link
 
@@ -12,20 +13,21 @@ from lxml import html
 
 from babel.numbers import parse_decimal  # from price to number
 
+def start_selenium():
+    chromium_service = Service()
 
-def start_selenium(webdriver_path):
     chromium_options = webdriver.ChromeOptions()  # add the debug options you need
     chromium_options.add_argument("--headless")  # do not open chromium gui
 
     # create a Chromium tab with the selected options
-    chromium_driver = webdriver.Chrome(executable_path=webdriver_path, options=chromium_options)
+    chromium_driver = webdriver.Chrome(service=chromium_service, options=chromium_options)
 
     return chromium_driver
 
 
-def get_all_deals_ids(webdriver_path):
+def get_all_deals_ids():
     deals_page = "https://www.amazon.it/deals/"
-    selenium_driver = start_selenium(webdriver_path)
+    selenium_driver = start_selenium()
 
     print("Starting taking all urls")
 
@@ -56,6 +58,7 @@ def get_all_deals_ids(webdriver_path):
 
         print("All urls taken. Extracting the ids")
 
+        # keep only product ids because they can be easily used to create the link for that product
         product_ids = [extract_product_id(url) for url in deals_urls if
                        extract_product_id(url) is not None and extract_product_id(url) != '']
 
@@ -86,6 +89,7 @@ def is_product(url):  # products have /dp/ in their url
 
 
 def extract_product_id(url):
+    # using regex, get the id, that is what follows "dp/" and that comes before "/" or "?"
     return re.search('dp\/(.*?)(?=\/|\?)', url).group(1)
 
 
@@ -112,10 +116,21 @@ def get_product_info(product_id):
         # translate() to make case-insensitive (class may be priceToPay or apexPriceToPay)
         new_price = product_page_content.xpath('//span[contains(translate(@class, "PRICETOPAY", "pricetopay"), "pricetopay")]//span[@class="a-offscreen"]/text()')[0]
 
+        if(new_price == ' '):  # there is another way the price may be displayed
+            new_price_whole = product_page_content.xpath('//span[contains(translate(@class, "PRICETOPAY", "pricetopay"), "pricetopay")]//span[@aria-hidden="true"]//span[@class="a-price-whole"]/text()')[0]
+            new_price_decimal = product_page_content.xpath('//span[contains(translate(@class, "PRICETOPAY", "pricetopay"), "pricetopay")]//span[@aria-hidden="true"]//span[@class="a-price-fraction"]/text()')[0]
+
+            new_price = new_price_whole + ',' + new_price_decimal + '€'  # put it in the other format, to use the same formula
+
         # calculate discount rate from new and old prices. Round to int and add '-' and '%' signs
         discount_rate = "-" + str(round(100 - (parse_decimal(new_price.strip('€'), locale='it') / parse_decimal(old_price.strip('€'), locale='it')) * 100)) + "%"
 
-        image_link = product_page_content.xpath('//img[@id="landingImage"]/@src')[0].split("._")[0] + ".jpg"  # remove latter part of image link to get the highest resolution
+        image = product_page_content.xpath('//img[@id="landingImage"]/@src')
+
+        if(len(image) == 0): # there is another way an image may be displayed
+            image = product_page_content.xpath('//div[contains(@class, "a-dynamic-image-container")]//img/@src')
+
+        image_link = image[0].split("._")[0] + ".jpg"  # remove latter part of image link to get the highest resolution
 
         return {
             "product_id": product_id,

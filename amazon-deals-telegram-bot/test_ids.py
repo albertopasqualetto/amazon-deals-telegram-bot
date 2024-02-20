@@ -15,12 +15,12 @@ def test_all_ids(deals_ids, logging=False):  # WARNING: Uses all bandwidth possi
 
     threads = []
     for id in deals_ids:
-        # create a thread with function test_single_id and give every thread the same arguments
+        # create a thread with function test_single_id for each id, and give every thread the similar arguments
         thread = threading.Thread(target=test_single_id, args=(id, valid_ids, discounts,))
         threads.append(thread)
         thread.start()
 
-    # wait for every thread to finish because continuing
+    # wait for every thread to finish before continuing
     for t in threads:
         t.join()
 
@@ -56,5 +56,5 @@ def test_single_id(id, valid_ids = None, discounts = None):
 
 if __name__ == '__main__':
     load_dotenv(".env")
-    deals_ids = apa.get_all_deals_ids(os.environ.get("AMAZON_DEALS_WEBDRIVER_PATH"))
+    deals_ids = apa.get_all_deals_ids()
     test_all_ids(deals_ids, logging=True)
