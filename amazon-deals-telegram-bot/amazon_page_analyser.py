@@ -14,7 +14,7 @@ from lxml import html
 from babel.numbers import parse_decimal  # from price to number
 
 def start_selenium():
-    chromium_service = Service()
+    chromium_service = Service()  # now Selenium download the correct version of the webdriver
 
     chromium_options = webdriver.ChromeOptions()  # add the debug options you need
     chromium_options.add_argument("--headless")  # do not open chromium gui

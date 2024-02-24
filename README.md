@@ -19,7 +19,7 @@ It can be used to automate the tedious job of selecting the deals from Amazon, a
 ## Setup
 
 - Install the required Python libraries specified in [requirements.txt](requirements.txt).
-- Install Chrome/Chromium ?? **TODO:** I don't understand if Chrome/Chromium is really needed now. If not, modify comments and variables in script
+- Install Chrome or Chromium
 - Create your telegram bot:
     - Start the bot [@BotFather](https://telegram.me/BotFather)
     - Create your bot. Take note of the _bot token_ and the _bot username_
