@@ -23,7 +23,7 @@ It can be used to automate the tedious job of selecting the deals from Amazon, a
 - Create your telegram bot:
     - Start the bot [@BotFather](https://telegram.me/BotFather)
     - Create your bot. Take note of the _bot token_ and the _bot username_
-- Use the information of the newly created bot to set the variables in the [.env](.env.example) file (you need to rename the file _.env.example_ to _.env_ on your local machine). Make sure not to share the information contained in it
+- Use the information of the newly created bot to set the variables in the [.env](.env.example) file (you need to rename the file _.env.example_ to _.env_ on your local machine and place in in the folder [amazon-deals-telegram-bot](amazon-deals-telegram-bot)). Make sure not to share the information contained in it
 
 ## Usage
 
