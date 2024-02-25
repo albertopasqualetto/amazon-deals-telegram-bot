@@ -32,13 +32,13 @@ It can be used to automate the tedious job of selecting the deals from Amazon, a
 To send a single message, just run the module with `python amazon-deals-telegram-bot`. The first time, it will take some time because it will download the correct version of the chromedriver and then retrieve all the possible IDs from which it may choose. This setup time will be lowered in successive runs because the chromedriver will be cached if the previously downloaded version is still up-to-date and present on your machine, and because the ids are saved in a file and updated only if more than 2 hours have passed since the last time they were retrieved.
 It is possible to periodically send messages by setting up a cron job that runs the script.
 
-### Server deployment
+### Server Deployment
 
 To deploy this application to a server you can use a working Selenium [grid](https://www.selenium.dev/documentation/grid/) with a node; the easiest way to set it up is using a [Docker](https://www.docker.com/) container ([selenium/standalone-chrome](https://hub.docker.com/r/selenium/standalone-chrome)) and change the code in [amazon_page_analyser.py](amazon-deals-telegram-bot/amazon_page_analyser.py)'s `start_selenium()` in order to use a Remote.
 
 The container can be always running or it can be started in the context of application execution.
 
-A working example for an ARM system can be obtained by applying [this patch](use_in_docker_arm.patch) (it uses [seleniarm/standalone-chromium](https://hub.docker.com/r/seleniarm/standalone-chromium)), you can modify it to make it work for your system.
+A working example for an ARM system can be obtained by applying [this patch](use_in_docker_arm.patch) (it uses [seleniarm/standalone-chromium](https://hub.docker.com/r/seleniarm/standalone-chromium)). You can modify it to make it work for your system.
 
 ## License
 
