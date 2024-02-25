@@ -1,0 +1,49 @@
+diff --git a/amazon-deals-telegram-bot/amazon_page_analyser.py b/amazon-deals-telegram-bot/amazon_page_analyser.py
+index 90ec7b0..2792e78 100644
+--- a/amazon-deals-telegram-bot/amazon_page_analyser.py
++++ b/amazon-deals-telegram-bot/amazon_page_analyser.py
+@@ -20,7 +20,11 @@ def start_selenium():
+     chromium_options.add_argument("--headless")  # do not open chromium gui
+ 
+     # create a Chromium tab with the selected options
+-    chromium_driver = webdriver.Chrome(service=chromium_service, options=chromium_options)
++    # chromium_driver = webdriver.Chrome(service=chromium_service, options=chromium_options)
++    chromium_driver = webdriver.Remote(
++        command_executor='http://localhost:4444/wd/hub',
++        options=chromium_options
++    )
+ 
+     return chromium_driver
+ 
+diff --git a/bootstrap.sh b/bootstrap.sh
+new file mode 100644
+index 0000000..bbb651e
+--- /dev/null
++++ b/bootstrap.sh
+@@ -0,0 +1,25 @@
++#!/bin/bash
++# bootstrap.sh
++# for use with a remote docker container running selenium grid (arm version)
++
++# wait between 0 and 10 minutes
++echo "waiting random time..."
++sleep $((RANDOM % 600))
++
++trap ' ' INT
++echo starting Selenium...
++docker run -d --name amazon-deals-telegram-bot --rm -it -p 4444:4444 -p 5900:5900 -p 7900:7900 --shm-size 2g seleniarm/standalone-chromium:latest
++
++# wait-for-grid.sh
++sleep 2
++while ! curl -sSL "localhost:4444/wd/hub/status" 2>&1 \
++        | jq -r '.value.ready' 2>&1 | grep "true" >/dev/null; do
++    echo 'Waiting for the Grid'
++    sleep 1
++done
++>&2 echo "Selenium Grid is up - executing tests"
++
++./venv/bin/python3 amazon-deals-telegram-bot
++
++echo stopping Selenium...
++docker stop amazon-deals-telegram-bot
+\ No newline at end of file
