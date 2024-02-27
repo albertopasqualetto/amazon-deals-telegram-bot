@@ -42,4 +42,4 @@ A working example for an ARM system can be obtained by applying [this patch](use
 
 ## License
 
-This source code is licensed under the [MIT license](LICENSE).
+This source code is licensed by [Alberto Pasqualetto](https://github.com/albertopasqualetto) and [Lorenzo Asquini](https://github.com/lorenzo-asquini) (the authors) under the [MIT license](LICENSE).
