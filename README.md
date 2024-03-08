@@ -2,6 +2,8 @@
 
 Create a telegram bot that scrapes deals from the Italian Amazon page and sends them to a channel. Ideal for automating an Amazon Deals Telegram channel with referral links.
 
+This software does not make use of the Amazon's Product Adverising APIs so you can use this before having a qualified Amazon Associates account and does not use Keepa's APIs.
+
 ## Table of Contents
 
 * [General Info](#general-information)
