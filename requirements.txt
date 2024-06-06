@@ -1,6 +1,6 @@
-requests~=2.31.0
-selenium~=4.11.2
-lxml~=5.1.0
-python-telegram-bot~=20.3
-python-dotenv~=0.21.1
-babel~=2.14.0
+requests~=2.32.3
+selenium~=4.21.0
+lxml~=5.2.2
+python-telegram-bot~=21.2
+python-dotenv~=1.0.1
+babel~=2.15.0
