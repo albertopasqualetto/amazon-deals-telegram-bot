@@ -8,6 +8,8 @@ from selenium.webdriver.chrome.service import Service
 
 import re  # use regex for selecting product id in link
 
+import time # wait for dynamic deals to load
+
 import requests  # lighter way to retrieve information from html only (no js and css loaded)
 from lxml import html
 
@@ -18,6 +20,7 @@ def start_selenium():
 
     chromium_options = webdriver.ChromeOptions()  # add the debug options you need
     chromium_options.add_argument("--headless")  # do not open chromium gui
+    chromium_options.add_argument('--log-level=1') # remove useless logs
 
     # create a Chromium tab with the selected options
     chromium_driver = webdriver.Chrome(service=chromium_service, options=chromium_options)
@@ -34,20 +37,26 @@ def get_all_deals_ids():
     try:
         selenium_driver.get(deals_page)
 
-        # go to page with 50% or more deals
-        selenium_driver.execute_script("arguments[0].click();",
-                                       selenium_driver.find_element(By.PARTIAL_LINK_TEXT,
-                                                                    "Sconto del 50%"))  # not using full text to avoid problems with utf-8
+        # go to page with 50% or more deals (the radio with value 3)
+        deals_50_button = selenium_driver.find_element(By.XPATH, '//input[@type="radio" and @name="percentOff" and @value="3"]')
+        selenium_driver.execute_script("arguments[0].click();", deals_50_button)
 
         # when the page with the deals above 50% loads, the deals become clickable.
         # Checking for document.readyState would not work (is already ready, just loads different deals)
         # Checking for url change would not work, because it changes before the new deals are loaded
         WebDriverWait(selenium_driver, 60).until(
-            EC.presence_of_element_located((By.CSS_SELECTOR, "a[class*='DealCard']")))  # timeout connect after 60 seconds
+            EC.presence_of_element_located((By.CSS_SELECTOR, "[data-testid='product-card']")))  # timeout connect after 60 seconds
+        
+        elements_urls = []
+        # scroll the page little by little to load more deals. Take the deals present after each scroll
+        for _ in range(100):
+            selenium_driver.execute_script("window.scrollBy(0, 200);")
 
-        # get all urls with <a> tag with a css class that contains 'DealCard'. There are both immediate deals and submenus with deals
-        elements_urls = [e.get_attribute("href") for e in
-                         selenium_driver.find_elements(By.CSS_SELECTOR, "a[class*='DealCard']")]
+            time.sleep(0.2)
+
+            # get all urls from <a> tags under <div> tags that contain "data-testid='product-card'". There are both immediate deals and submenus with deals
+            elements_urls += [e.find_element(By.TAG_NAME, 'a').get_attribute("href") for e in
+                            selenium_driver.find_elements(By.CSS_SELECTOR, "[data-testid='product-card']")]
 
         deals_urls = []  # store all deals urls from main page and from submenus
         for url in elements_urls:
@@ -100,7 +109,7 @@ def url_from_id(product_id):
     return "https://www.amazon.it/dp/" + product_id
 
 
-def get_product_info(product_id):
+def get_product_info(product_id, remove_ebooks=False):
     # headers needed to avoid scraping blocking
     headers = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:12.0) Gecko/20100101 Firefox/12.0', }
     params = {
@@ -114,16 +123,28 @@ def get_product_info(product_id):
     try:
         # elements may not be found if the deal is a subscription (regular purchase)
         title = product_page_content.xpath('//span[@id="productTitle"]/text()')[0].strip()
-        old_price = product_page_content.xpath('//span[@data-a-strike="true"]//span[@aria-hidden="true"]/text()')[0]
 
-        # translate() to make case-insensitive (class may be priceToPay or apexPriceToPay)
-        new_price = product_page_content.xpath('//span[contains(translate(@class, "PRICETOPAY", "pricetopay"), "pricetopay")]//span[@class="a-offscreen"]/text()')[0]
+        # the product is not an ebook
+        if(len(product_page_content.xpath('//*[@id="kindle-price"]')) == 0):
 
-        if(new_price == ' '):  # there is another way the price may be displayed
-            new_price_whole = product_page_content.xpath('//span[contains(translate(@class, "PRICETOPAY", "pricetopay"), "pricetopay")]//span[@aria-hidden="true"]//span[@class="a-price-whole"]/text()')[0]
-            new_price_decimal = product_page_content.xpath('//span[contains(translate(@class, "PRICETOPAY", "pricetopay"), "pricetopay")]//span[@aria-hidden="true"]//span[@class="a-price-fraction"]/text()')[0]
+            old_price = product_page_content.xpath('//span[@data-a-strike="true"]//span[@aria-hidden="true"]/text()')[0]
 
-            new_price = new_price_whole + ',' + new_price_decimal + '€'  # put it in the other format, to use the same formula
+            # translate() to make case-insensitive (class may be priceToPay or apexPriceToPay)
+            new_price = product_page_content.xpath('//span[contains(translate(@class, "PRICETOPAY", "pricetopay"), "pricetopay")]//span[@class="a-offscreen"]/text()')[0]
+
+            if(new_price == ' '):  # there is another way the price may be displayed (whole and decimal part)
+                new_price_whole = product_page_content.xpath('//span[contains(translate(@class, "PRICETOPAY", "pricetopay"), "pricetopay")]//span[@aria-hidden="true"]//span[@class="a-price-whole"]/text()')[0]
+                new_price_decimal = product_page_content.xpath('//span[contains(translate(@class, "PRICETOPAY", "pricetopay"), "pricetopay")]//span[@aria-hidden="true"]//span[@class="a-price-fraction"]/text()')[0]
+                new_price = new_price_whole + ',' + new_price_decimal + '€'  # put it in the other format, to use the same formula
+
+        elif(not remove_ebooks):
+            # the price is written a bit differently, so it's better to directly remove the last two characters
+            old_price = product_page_content.xpath('//*[@id="basis-price"]/text()')[0][:-2]
+            new_price = product_page_content.xpath('//*[@id="kindle-price"]/text()')[0][:-2]
+        
+        else:
+            print("Skipping ebook")
+            return None  # ignore the ebook
 
         # calculate discount rate from new and old prices. Round to int and add '-' and '%' signs
         discount_rate = "-" + str(round(100 - (parse_decimal(new_price.strip('€'), locale='it') / parse_decimal(old_price.strip('€'), locale='it')) * 100)) + "%"
@@ -145,5 +166,5 @@ def get_product_info(product_id):
         }
 
     except Exception as e:
-        print("\nError for product id:\n\n" + product_id + "\n\nbecause:\n\n" + str(e) + "\n Probably strange formatting of webpage.\n")
+        print("\nError for product id:\n\n" + product_id + "\n\nbecause:\n\n" + str(e) + "\nProbably strange formatting of webpage.\n")
         return None
