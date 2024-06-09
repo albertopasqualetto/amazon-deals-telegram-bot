@@ -5,8 +5,6 @@ import threading
 import json
 
 from dotenv import load_dotenv  # load variables from .env file
-import os
-
 
 def test_all_ids(deals_ids, logging=False):  # WARNING: Uses all bandwidth possible
     # array are needed because threads cannot return values

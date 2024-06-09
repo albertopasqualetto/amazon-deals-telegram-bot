@@ -9,6 +9,7 @@ from selenium.webdriver.chrome.service import Service
 import re  # use regex for selecting product id in link
 
 import time # wait for dynamic deals to load
+import random # use random user agent to avoid scrape blocking
 
 import requests  # lighter way to retrieve information from html only (no js and css loaded)
 from lxml import html
@@ -110,8 +111,16 @@ def url_from_id(product_id):
 
 
 def get_product_info(product_id, remove_ebooks=False):
-    # headers needed to avoid scraping blocking
-    headers = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:12.0) Gecko/20100101 Firefox/12.0', }
+    # headers needed to avoid scraping blocking (helps at least a bit)
+    user_agents = [
+        'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2403.157 Safari/537.36',
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3',
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.1 Safari/605.1.15'
+    ]
+
+    headers = {'User-Agent': random.choice(user_agents)}
+
     params = {
         'th': '1',
         'psc': '1'
@@ -138,9 +147,12 @@ def get_product_info(product_id, remove_ebooks=False):
                 new_price = new_price_whole + ',' + new_price_decimal + '€'  # put it in the other format, to use the same formula
 
         elif(not remove_ebooks):
-            # the price is written a bit differently, so it's better to directly remove the last two characters
-            old_price = product_page_content.xpath('//*[@id="basis-price"]/text()')[0][:-2]
-            new_price = product_page_content.xpath('//*[@id="kindle-price"]/text()')[0][:-2]
+            # the price is written a bit differently, so:
+            # remove the last two characters
+            # remove any useless white space
+            # add again the euro sign
+            old_price = product_page_content.xpath('//*[@id="basis-price"]/text()')[0][:-2].strip() + "€"
+            new_price = product_page_content.xpath('//*[@id="kindle-price"]/text()')[0][:-2].strip() + "€"
         
         else:
             print("Skipping ebook")
