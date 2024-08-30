@@ -47,7 +47,7 @@ def get_all_deals_ids():
         # Checking for url change would not work, because it changes before the new deals are loaded
         WebDriverWait(selenium_driver, 60).until(
             EC.presence_of_element_located((By.CSS_SELECTOR, "[data-testid='product-card']")))  # timeout connect after 60 seconds
-        
+
         elements_urls = []
         # scroll the page little by little to load more deals. Take the deals present after each scroll
         for _ in range(100):
@@ -109,19 +109,6 @@ def extract_product_id(url):
 def url_from_id(product_id):
     return "https://www.amazon.it/dp/" + product_id
 
-def aggiungi_affiliate_tag(url, affiliate_id):
-    # Verifica se l'URL contiene già un punto di domanda
-    if '?' in url:
-        url += f'&tag={affiliate_id}'
-    else:
-        url += f'?tag={affiliate_id}'
-    return url
-
-# Esempio di utilizzo
-amazon_url = "https://www.amazon.com/dp/B08N5WRWNW"
-affiliate_id = "YOURASSOCIATEID"
-url_con_tag = aggiungi_affiliate_tag(amazon_url, affiliate_id)
-print(url_con_tag)
 
 def get_product_info(product_id, remove_ebooks=False):
     # headers needed to avoid scraping blocking (helps at least a bit)
