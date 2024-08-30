@@ -47,7 +47,7 @@ def get_all_deals_ids():
         # Checking for url change would not work, because it changes before the new deals are loaded
         WebDriverWait(selenium_driver, 60).until(
             EC.presence_of_element_located((By.CSS_SELECTOR, "[data-testid='product-card']")))  # timeout connect after 60 seconds
-        
+
         elements_urls = []
         # scroll the page little by little to load more deals. Take the deals present after each scroll
         for _ in range(100):

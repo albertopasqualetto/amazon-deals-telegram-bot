@@ -11,6 +11,8 @@ import asyncio
 
 import json
 
+from urllib.parse import urlparse, parse_qs, urlencode
+
 
 def get_random_product_info(deals_ids, already_sent_products_ids):
     if(len(deals_ids) == 0):
@@ -21,8 +23,7 @@ def get_random_product_info(deals_ids, already_sent_products_ids):
 
     while True:  # get new product until the selected one is valid
         if (selected_product_info is not None) and (
-                selected_product_info[
-                    "product_id"] not in already_sent_products_ids):  # product valid and not already sent
+                selected_product_info["product_id"] not in already_sent_products_ids):  # product valid and not already sent
             break
 
         deals_ids.remove(selected_deal_id)  # remove invalid product to not encounter it in the next iteration
@@ -44,6 +45,21 @@ def get_random_product_info(deals_ids, already_sent_products_ids):
     return selected_product_info, already_sent_products_ids
 
 
+'''
+    Add affiliate id ('tag') parameter in url.
+
+    If a previous one was present it is removed.
+    If an empty string is passed (default), affiliate id is not added.
+'''
+def add_affiliate_id(url, affiliate_id=''):
+    url_parts = urlparse(url)   # parse url parts
+    query = parse_qs(url_parts.query, keep_blank_values=True)   # get parameters from url
+    query.update({'tag': affiliate_id}) # add affiliate id
+    if affiliate_id == '':  # if no affiliate id provided, do not add it
+        query.pop('tag')
+    return url_parts._replace(query=urlencode(query, doseq=True)).geturl()  # rebuild url
+
+
 def send_deal(bot, product_info, chat_id):
     if(product_info == None):
         return
@@ -53,7 +69,7 @@ def send_deal(bot, product_info, chat_id):
     comparison_text = ['invece di ', 'al posto di ', 'piuttosto che ']
 
     caption = "<b>" + product_info["title"] + "</b>" + "\n\n"
-    caption += "\U0001F449 " + apa.url_from_id(product_info["product_id"]) + "\n\n"  # add affiliate code here if any
+    caption += "\U0001F449 " + add_affiliate_id(apa.url_from_id(product_info["product_id"]), os.environ.get("AMAZON_DEALS_TG_AFFILIATE_ID")) + "\n\n"
     caption += random.choice(emoticon) + product_info["discount_rate"] + "\n"
     caption += "\U0001F4B6 " + random.choice(starting_text) + product_info["new_price"] + ", " + random.choice(comparison_text) + \
                "<del>" + product_info["old_price"] + "</del> " + random.choice(emoticon)
