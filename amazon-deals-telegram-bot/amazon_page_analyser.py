@@ -16,6 +16,8 @@ from lxml import html
 
 from babel.numbers import parse_decimal  # from price to number
 
+import os
+
 def start_selenium():
     chromium_service = Service()  # now Selenium download the correct version of the webdriver
 
@@ -30,7 +32,7 @@ def start_selenium():
 
 
 def get_all_deals_ids():
-    deals_page = "https://www.amazon.it/deals/"
+    deals_page = f"https://www.amazon.{os.environ.get("AMAZON_COUNTRY_TLD")}/{os.environ.get("AMAZON_DEALS_SUBPAGE")}/"
     selenium_driver = start_selenium()
 
     print("Starting taking all urls")

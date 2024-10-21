@@ -65,6 +65,7 @@ def send_deal(bot, product_info, chat_id):
         return
 
     emoticon = ['\U0000203C', '\U00002757', '\U0001F525', '\U000026A1', '\U00002728']  # elements of message
+    # TODO internationalize in some way
     starting_text = ['A soli ', 'Solamente ', 'Soltanto ', 'Appena ', 'Incredibilmente solo ', 'Incredibilmente soltanto ']
     comparison_text = ['invece di ', 'al posto di ', 'piuttosto che ']
 
