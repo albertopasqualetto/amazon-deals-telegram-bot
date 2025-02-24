@@ -8,9 +8,11 @@ from selenium.webdriver.chrome.service import Service
 
 from urllib3.exceptions import MaxRetryError    # error when connecting to remote chromium
 
-import os
+import os   # get environment variables
 
-import re  # use regex for selecting product id in link
+import sys  # exit if error
+
+import re   # use regex for selecting product id in link
 
 import time # wait for dynamic deals to load
 import random # use random user agent to avoid scrape blocking
@@ -33,10 +35,16 @@ def start_selenium():
         try:
             chromium_driver = webdriver.Remote(command_executor=os.environ.get("REMOTE_CHROMIUM"), options=chromium_options)
         except MaxRetryError:
-            print("Error connecting to remote chromium.")
+            sys.exit("Error connecting to remote chromium.")
             if not os.environ.get("REMOTE_CHROMIUM").endswith('/wd/hub'):
-                print("Remote Chromium address does not end with '/wd/hub'. Trying to add it.")
-                chromium_driver = webdriver.Remote(command_executor=os.environ.get("REMOTE_CHROMIUM") + '/wd/hub', options=chromium_options)
+                try:
+                    print("Remote Chromium address does not end with '/wd/hub'. Trying to add it.")
+                    chromium_driver = webdriver.Remote(command_executor=os.environ.get("REMOTE_CHROMIUM") + '/wd/hub', options=chromium_options)
+                except MaxRetryError:
+                    print("Error connecting to remote chromium even with fix.")
+                    sys.exit("Error connecting to remote chromium even with fix.")
+            else:
+                sys.exit("Error connecting to remote chromium.")
     else:
         chromium_driver = webdriver.Chrome(service=chromium_service, options=chromium_options)
 

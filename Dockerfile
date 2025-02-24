@@ -7,6 +7,6 @@ WORKDIR /app
 # Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-ENV WEBDRIVER_REMOTE = "http://selenium:4444/wd/hub"
+ENV REMOTE_CHROMIUM=http://selenium:4444/wd/hub
 
 CMD ["python", "amazon-deals-telegram-bot"]
