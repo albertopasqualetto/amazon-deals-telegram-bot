@@ -40,6 +40,7 @@ It is possible to periodically send messages by setting up a cron job that runs 
 ### Server Deployment
 
 To deploy this application to a server you can use a working Selenium [grid](https://www.selenium.dev/documentation/grid/) with a node; the easiest way to set it up is using Docker Compose and schedule `docker compose up` with a cron job.
+Possibly after sending 1 message (the bot container is stopped), take down the docker compose to save resources.
 
 ## License
 

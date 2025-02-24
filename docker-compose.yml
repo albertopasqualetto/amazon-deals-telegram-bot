@@ -11,7 +11,7 @@ services:
     depends_on:
       selenium:
         condition: service_healthy
-    restart: always
+    restart: on-failure
 
   selenium:
     image: selenium/standalone-chromium:latest
