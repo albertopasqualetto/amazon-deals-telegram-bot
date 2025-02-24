@@ -13,6 +13,7 @@ import json
 
 from urllib.parse import urlparse, parse_qs, urlencode
 
+OUTPUT_DEALS_FILE = "deals_ids.json" if not os.environ.get("IS_CONTAINERIZED") else "/data/deals_ids.json"  # file to save scraped deals ids
 
 def get_random_product_info(deals_ids, already_sent_products_ids):
     if(len(deals_ids) == 0):
@@ -82,7 +83,7 @@ def send_deal(bot, product_info, chat_id):
 def retrieve_deals():
     # if json file with already scraped deals exists
     try:
-        with open("deals_ids.json", "r") as file:
+        with open(OUTPUT_DEALS_FILE, "r") as file:
             deals_dict = json.load(file)
             download_new_deals = False
             if time.time() - float(deals_dict["collection_time"]) > 2*3600:     # update deals every 2 hours
@@ -120,7 +121,7 @@ def run():
     new_deals_dict = {"collection_time": collection_time,
                       "deals_ids": deals_ids,
                       "already_sent_product_ids": already_sent_product_ids}
-    with open("deals_ids.json", "w") as file:
+    with open(OUTPUT_DEALS_FILE, "w") as file:
         json.dump(new_deals_dict, file)
 
 
