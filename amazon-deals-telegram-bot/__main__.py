@@ -13,6 +13,18 @@ import json
 
 from urllib.parse import urlparse, parse_qs, urlencode
 
+try:
+    from apscheduler.schedulers.blocking import BlockingScheduler
+    from apscheduler.triggers.cron import CronTrigger
+except ImportError: # support for non containerized environments
+    BlockingScheduler = None
+    CronTrigger = None
+
+
+CRON_EXPRESSION = os.environ.get("AMAZON_DEALS_TG_CRON_SCHEDULE") if os.environ.get("AMAZON_DEALS_TG_CRON_SCHEDULE") else "*/20 8-23 * * *"
+
+OUTPUT_DEALS_FILE = "deals_ids.json" if not os.environ.get("IS_CONTAINERIZED") else "/data/deals_ids.json"  # file to save scraped deals ids
+
 
 def get_random_product_info(deals_ids, already_sent_products_ids):
     if(len(deals_ids) == 0):
@@ -78,33 +90,38 @@ def send_deal(bot, product_info, chat_id):
 
     print("\nMessage sent:\n" + caption + "\n")
 
-# This whole script is executed every time a new message needs to be sent.
-# For this reason it is necessary to save data in a json file to avoid scraping every time the deals,
-# and to avoid sending the same deals back to back.
-# An alternative would be to have a while loop with a delay, but it would not be optimised for cron, which can be used schedule deals messages.
-if __name__ == '__main__':
 
-    load_dotenv(".env")
-
-    new_collection_time = None
-    already_sent_product_ids = []
-
+def retrieve_deals():
     # if json file with already scraped deals exists
     try:
-
-        with open("deals_ids.json", "r") as file:
-
+        with open(OUTPUT_DEALS_FILE, "r") as file:
             deals_dict = json.load(file)
-            deals_ids = deals_dict["deals_ids"]
-            already_sent_product_ids = deals_dict["already_sent_product_ids"]
+            download_new_deals = False
             if time.time() - float(deals_dict["collection_time"]) > 2*3600:     # update deals every 2 hours
-                deals_ids = apa.get_all_deals_ids()
-                new_collection_time = time.time()
+                download_new_deals = True
 
     # cannot open the file, load from web
     except OSError as e:
-        deals_ids = apa.get_all_deals_ids()
-        new_collection_time = time.time()
+        download_new_deals = True
+
+    if download_new_deals:
+        deals_dict = {"collection_time": time.time(),
+                        "deals_ids": apa.get_all_deals_ids(),
+                        "already_sent_product_ids": []}
+
+    return deals_dict
+
+
+# This whole code is executed every time a new message needs to be sent.
+# For this reason it is necessary to save data in a json file to avoid scraping every time the deals,
+# and to avoid sending the same deals back to back.
+# An alternative would be to have a while loop with a delay, but it would not be optimized for cron, which can be used to schedule deals messages.
+def run():
+    print("Running...")
+    deals_dict = retrieve_deals()
+    collection_time = deals_dict["collection_time"]
+    deals_ids = deals_dict["deals_ids"]
+    already_sent_product_ids = deals_dict["already_sent_product_ids"]
 
     # connect to the telegram bot
     bot = telegram.Bot(token=os.environ.get("AMAZON_DEALS_TG_BOT_TOKEN"))
@@ -113,8 +130,31 @@ if __name__ == '__main__':
     send_deal(bot, selected_product_info, chat_id=os.environ.get("AMAZON_DEALS_TG_CHANNEL_ID"))
 
     # save deals collection time, the ids of new deals and the ids of the already sent products in a json file
-    new_deals_dict = {"collection_time": new_collection_time if new_collection_time else deals_dict["collection_time"],
+    new_deals_dict = {"collection_time": collection_time,
                       "deals_ids": deals_ids,
                       "already_sent_product_ids": already_sent_product_ids}
-    with open("deals_ids.json", "w") as file:
+    with open(OUTPUT_DEALS_FILE, "w") as file:
         json.dump(new_deals_dict, file)
+    print("Run completed.")
+
+
+def delayed_run():
+    print("Waiting a random time before running...")
+    time.sleep(random.randint(0, 600))
+    run()
+
+
+if __name__ == '__main__':
+    load_dotenv(".env")
+
+    # First run
+    run()
+
+    if os.environ.get("IS_CONTAINERIZED"):
+        print("Running in containerized environment. Scheduler will be added.")
+        scheduler = BlockingScheduler()
+        scheduler.add_job(delayed_run, CronTrigger.from_crontab(CRON_EXPRESSION))
+        try:
+            scheduler.start()
+        except (KeyboardInterrupt, SystemExit):
+            pass

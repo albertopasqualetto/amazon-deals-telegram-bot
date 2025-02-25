@@ -6,7 +6,13 @@ from selenium.webdriver.support.wait import WebDriverWait  # wait for the 50% de
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.service import Service
 
-import re  # use regex for selecting product id in link
+from urllib3.exceptions import MaxRetryError    # error when connecting to remote chromium
+
+import os   # get environment variables
+
+import sys  # exit if error
+
+import re   # use regex for selecting product id in link
 
 import time # wait for dynamic deals to load
 import random # use random user agent to avoid scrape blocking
@@ -16,6 +22,7 @@ from lxml import html
 
 from babel.numbers import parse_decimal  # from price to number
 
+
 def start_selenium():
     chromium_service = Service()  # now Selenium download the correct version of the webdriver
 
@@ -24,7 +31,22 @@ def start_selenium():
     chromium_options.add_argument('--log-level=1') # remove useless logs
 
     # create a Chromium tab with the selected options
-    chromium_driver = webdriver.Chrome(service=chromium_service, options=chromium_options)
+    if os.environ.get("REMOTE_CHROMIUM"):
+        try:
+            chromium_driver = webdriver.Remote(command_executor=os.environ.get("REMOTE_CHROMIUM"), options=chromium_options)
+        except MaxRetryError:
+            sys.exit("Error connecting to remote chromium.")
+            if not os.environ.get("REMOTE_CHROMIUM").endswith('/wd/hub'):
+                try:
+                    print("Remote Chromium address does not end with '/wd/hub'. Trying to add it.")
+                    chromium_driver = webdriver.Remote(command_executor=os.environ.get("REMOTE_CHROMIUM") + '/wd/hub', options=chromium_options)
+                except MaxRetryError:
+                    print("Error connecting to remote chromium even with fix.")
+                    sys.exit("Error connecting to remote chromium even with fix.")
+            else:
+                sys.exit("Error connecting to remote chromium.")
+    else:
+        chromium_driver = webdriver.Chrome(service=chromium_service, options=chromium_options)
 
     return chromium_driver
 

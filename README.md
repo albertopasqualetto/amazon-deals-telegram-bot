@@ -6,10 +6,13 @@ This software does not make use of the Amazon's Product Adverising APIs so you c
 
 ## Table of Contents
 
-* [General Info](#general-information)
-* [Setup](#setup)
-* [Usage](#usage)
-* [License](#license)
+- [amazon-deals-telegram-bot](#amazon-deals-telegram-bot)
+  - [Table of Contents](#table-of-contents)
+  - [General Information](#general-information)
+  - [Setup](#setup)
+  - [Usage](#usage)
+    - [Server Deployment](#server-deployment)
+  - [License](#license)
 
 ## General Information
 
@@ -36,11 +39,8 @@ It is possible to periodically send messages by setting up a cron job that runs 
 
 ### Server Deployment
 
-To deploy this application to a server you can use a working Selenium [grid](https://www.selenium.dev/documentation/grid/) with a node; the easiest way to set it up is using a [Docker](https://www.docker.com/) container ([selenium/standalone-chrome](https://hub.docker.com/r/selenium/standalone-chrome)) and change the code in [amazon_page_analyser.py](amazon-deals-telegram-bot/amazon_page_analyser.py)'s `start_selenium()` in order to use a Remote.
-
-The container can be always running or it can be started in the context of application execution.
-
-A working example for an ARM system can be obtained by applying [this patch](use_in_docker_arm.patch) (it uses [seleniarm/standalone-chromium](https://hub.docker.com/r/seleniarm/standalone-chromium)). You can modify it to make it work for your system.
+To deploy this application to a server you can use a Selenium [grid](https://www.selenium.dev/documentation/grid/) with a node.
+The easiest way to set it up is using the [Docker Compose file](docker-compose.yml) setting its specific additional environment variables to schedule executions.
 
 ## License
 

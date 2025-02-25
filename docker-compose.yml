@@ -1,0 +1,27 @@
+services:
+  bot:
+    build:
+      context: https://github.com/albertopasqualetto/amazon-deals-telegram-bot.git#docker
+      dockerfile: Dockerfile
+    container_name: amazon-deals-telegram-bot
+    env_file:
+      - .env
+    environment:
+      - REMOTE_CHROMIUM=http://selenium:4444/wd/hub   # Selenium grid address (default value)
+      - AMAZON_DEALS_TG_CRON_SCHEDULE=*/20 8-23 * * * # Cron expression schedule (default value)
+    depends_on:
+      selenium:
+        condition: service_healthy
+    restart: on-failure
+
+  selenium:
+    image: selenium/standalone-chromium:latest
+    container_name: amazon-deals-tg-selenium
+    shm_size: 2g
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sSL \"http://selenium:4444/wd/hub/status\" 2>&1 | jq -r '.value.ready' 2>&1 | grep \"true\""]
+      interval: 1m
+      timeout: 60s
+      retries: 3
+      start_period: 300s
+    restart: always
