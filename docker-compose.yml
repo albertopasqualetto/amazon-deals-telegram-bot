@@ -7,7 +7,8 @@ services:
     env_file:
       - .env
     environment:
-      - REMOTE_CHROMIUM=http://selenium:4444/wd/hub
+      - REMOTE_CHROMIUM=http://selenium:4444/wd/hub   # Selenium grid address (default value)
+      - AMAZON_DEALS_TG_CRON_SCHEDULE=*/20 8-23 * * * # Cron expression schedule (default value)
     depends_on:
       selenium:
         condition: service_healthy
@@ -15,7 +16,7 @@ services:
 
   selenium:
     image: selenium/standalone-chromium:latest
-    container_name: adtb-selenium
+    container_name: amazon-deals-tg-selenium
     shm_size: 2g
     healthcheck:
       test: ["CMD-SHELL", "curl -sSL \"http://selenium:4444/wd/hub/status\" 2>&1 | jq -r '.value.ready' 2>&1 | grep \"true\""]

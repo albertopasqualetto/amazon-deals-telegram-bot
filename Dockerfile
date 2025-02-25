@@ -1,5 +1,7 @@
 FROM python:3.13-alpine
 
+ENV PYTHONUNBUFFERED 1
+
 # Set the working directory
 COPY . /app
 WORKDIR /app
