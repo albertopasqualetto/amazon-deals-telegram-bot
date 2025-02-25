@@ -13,8 +13,12 @@ import json
 
 from urllib.parse import urlparse, parse_qs, urlencode
 
-from apscheduler.schedulers.blocking import BlockingScheduler
-from apscheduler.triggers.cron import CronTrigger
+try:
+    from apscheduler.schedulers.blocking import BlockingScheduler
+    from apscheduler.triggers.cron import CronTrigger
+except ImportError: # support for non containerized environments
+    BlockingScheduler = None
+    CronTrigger = None
 
 
 CRON_EXPRESSION = os.environ.get("AMAZON_DEALS_TG_CRON_SCHEDULE") if os.environ.get("AMAZON_DEALS_TG_CRON_SCHEDULE") else "*/20 8-23 * * *"
