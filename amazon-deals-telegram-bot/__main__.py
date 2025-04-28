@@ -100,8 +100,8 @@ def retrieve_deals():
             if time.time() - float(deals_dict["collection_time"]) > 2*3600:     # update deals every 2 hours
                 download_new_deals = True
 
-    # cannot open the file, load from web
-    except OSError as e:
+    # cannot get data from file, download from web
+    except (OSError, json.JSONDecodeError) as e:
         download_new_deals = True
 
     if download_new_deals:
