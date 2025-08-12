@@ -22,6 +22,9 @@ from lxml import html
 
 from babel.numbers import parse_decimal  # from price to number
 
+from urllib.parse import unquote, quote
+import json
+
 
 def start_selenium():
     chromium_service = Service()  # now Selenium download the correct version of the webdriver
@@ -51,6 +54,91 @@ def start_selenium():
     return chromium_driver
 
 
+def decode_amazon_deals_page(url):
+    def multi_unquote(s, times=2):
+        for _ in range(times):
+            s = unquote(s)
+        return s
+
+    def get_dict(decoded_url, starting_part='discounts-widget'):
+        starting_part = starting_part+'='
+        start = decoded_url.find(starting_part) + len(starting_part)
+        json_str = decoded_url[start:]
+        return json.loads(json.loads(json_str))
+
+    decoded_url = multi_unquote(url)
+    values = get_dict(decoded_url)
+    return values
+
+def encode_amazon_deals_page(
+    base_url,
+    percentOff_min=None,
+    percentOff_max=None,
+    price_min=None,
+    price_max=None,
+    departments=None,
+    reviewRating=None,
+    brands=None,
+    starting_part='discounts-widget',
+    version=1
+):
+    # Set default max/min for percentOff if only one bound is given
+    percentOff_min = percentOff_min if percentOff_min is not None else (0 if percentOff_max is not None else None)
+    percentOff_max = percentOff_max if percentOff_max is not None else (100 if percentOff_min is not None else None)
+
+    # Set default max/min for price if only one bound is given
+    price_min = price_min if price_min is not None else (0 if price_max is not None else None)
+    price_max = price_max if price_max is not None else (6000 if price_min is not None else None)
+
+    # Build refinementFilters dict with only non-empty lists
+    refinement_filters = {}
+    if departments:
+        refinement_filters['departments'] = departments
+    if reviewRating:
+        refinement_filters['reviewRating'] = reviewRating
+    if brands:
+        refinement_filters['brands'] = brands
+    if not refinement_filters:
+        refinement_filters = None
+
+    # Build rangeRefinementFilters dict only if min and max are defined
+    range_refinement_filters = {}
+    if percentOff_min is not None and percentOff_max is not None:
+        range_refinement_filters['percentOff'] = {
+            'min': percentOff_min,
+            'max': percentOff_max
+        }
+    if price_min is not None and price_max is not None:
+        range_refinement_filters['price'] = {
+            'min': price_min,
+            'max': price_max
+        }
+
+    if not range_refinement_filters:
+        range_refinement_filters = None
+
+    # Build full state dict with only non-empty keys
+    state = {}
+    if refinement_filters:
+        state['refinementFilters'] = refinement_filters
+    if range_refinement_filters:
+        state['rangeRefinementFilters'] = range_refinement_filters
+
+    data = {
+        'state': state,
+        'version': version
+    }
+
+    # Double json.dumps for the string literal
+    json_str_literal = json.dumps(json.dumps(data))
+
+    # Double URL encode
+    encoded_value = quote(quote(json_str_literal))
+
+    sep = '&' if '?' in base_url else '?'
+    return f"{base_url}{sep}{starting_part}={encoded_value}"
+
+
 def get_all_deals_ids():
     deals_page = "https://www.amazon.it/deals/"
     selenium_driver = start_selenium()
@@ -60,9 +148,10 @@ def get_all_deals_ids():
     try:
         selenium_driver.get(deals_page)
 
-        # go to page with 50% or more deals (the radio with value 3)
-        deals_50_button = selenium_driver.find_element(By.XPATH, '//input[@type="radio" and @name="percentOff" and @value="3"]')
-        selenium_driver.execute_script("arguments[0].click();", deals_50_button)
+        # # go to page with 50% or more deals (the radio with value 3)
+        # deals_50_button = selenium_driver.find_element(By.XPATH, '//input[@type="radio" and @name="percentOff" and @value="3"]')
+        # selenium_driver.execute_script("arguments[0].click();", deals_50_button)
+        selenium_driver.get(encode_amazon_deals_page(deals_page, percentOff_min=50))    # go to page with 50% or more deals
 
         # when the page with the deals above 50% loads, the deals become clickable.
         # Checking for document.readyState would not work (is already ready, just loads different deals)
