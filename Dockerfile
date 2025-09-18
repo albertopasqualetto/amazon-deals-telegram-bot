@@ -2,6 +2,8 @@ FROM python:3.13-alpine
 
 ENV PYTHONUNBUFFERED 1
 
+RUN apk add --no-cache tzdata
+
 # Set the working directory
 COPY . /app
 WORKDIR /app
