@@ -212,7 +212,7 @@ def is_product(url):  # products have /dp/ in their url
 def extract_product_id(url):
     try:
         # using regex, get the id, that is what follows "dp/" and that comes before "/" or "?"
-        return re.search('dp\/(.*?)(?=\/|\?)', url).group(1)
+        return re.search(r'dp/(.*?)(?=/|\?)', url).group(1)
     except:
         return None
 
