@@ -211,8 +211,9 @@ def is_product(url):  # products have /dp/ in their url
 
 def extract_product_id(url):
     try:
-        # using regex, get the id, that is what follows "dp/" and that comes before "/" or "?"
-        return re.search(r'dp/(.*?)(?=/|\?)', url).group(1)
+        # using regex, get the id after "dp/" until "/", "?", or the end of the URL
+        m = re.search(r'dp/([^/?]+)', url)
+        return m.group(1) if m else None
     except:
         return None
 
